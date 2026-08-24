@@ -1,0 +1,6 @@
+{
+  "name": "Maximize Your Future",
+  "description": "Seven AI specialist agents working for you across freelancing, zero-ship commerce, weak signals, benchmarks, growth channels, and compound agent skills.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
