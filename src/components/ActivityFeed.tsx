@@ -1,71 +1,64 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Activity } from 'lucide-react';
-import { ACTIVITY_LOG } from '@/data/agents';
+import { ACTIVITY_LOG, AGENTS } from '@/data/agents';
+import { SCHEDULE_MAP } from '@/data/covenant';
+import { useSchedules } from '@/contexts/ScheduleContext';
 
 const ActivityFeed: React.FC = () => {
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 3500);
-    return () => clearInterval(id);
-  }, []);
-
-  const rotated = [...ACTIVITY_LOG.slice(tick % ACTIVITY_LOG.length), ...ACTIVITY_LOG.slice(0, tick % ACTIVITY_LOG.length)];
+  const { schedules } = useSchedules();
 
   return (
-    <section id="feed" className="border-b border-white/10 py-20">
+    <section id="feed" className="py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-center">
-          <div>
-            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
-              <Activity className="h-3.5 w-3.5" /> Unified feed
-            </div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Everything the swarm did today
-            </h2>
-            <p className="mt-3 text-slate-400">
-              One chronological stream across all five agents so you can see exactly what was swept, what was
-              discarded, and what got promoted to your Top 3. No black box.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <div className="font-mono text-xl font-bold text-emerald-400">99.2%</div>
-                <div className="text-[11px] uppercase tracking-wider text-slate-500">Signals discarded</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <div className="font-mono text-xl font-bold text-blue-400">15</div>
-                <div className="text-[11px] uppercase tracking-wider text-slate-500">Promoted to you</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <div className="font-mono text-xl font-bold text-amber-400">0</div>
-                <div className="text-[11px] uppercase tracking-wider text-slate-500">Actions taken for you</div>
-              </div>
-            </div>
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-500">
+          <Activity className="h-3.5 w-3.5" /> Live feed
+        </div>
+        <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl">
+          Your team, working quietly in the background
+        </h2>
+        <p className="mt-3 max-w-2xl text-slate-500">
+          Everything the agents did on their most recent cycles, and the rhythm each one is keeping right now.
+        </p>
+
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div className="rounded-3xl border border-white bg-white/80 p-2 shadow-sm sm:p-3">
+            <ul className="divide-y divide-slate-100">
+              {ACTIVITY_LOG.map((row, i) => (
+                <li key={i} className="flex items-start gap-3 px-3 py-3.5">
+                  <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-current ${row.tone}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-2">
+                      <span className={`font-mono text-[11px] font-semibold uppercase tracking-wider ${row.tone}`}>
+                        {row.agent}
+                      </span>
+                      <span className="text-[11px] text-slate-400">{row.time}</span>
+                    </div>
+                    <p className="mt-0.5 text-sm text-slate-600">{row.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/50">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">swarm.log</span>
-              <span className="flex items-center gap-1.5 text-[11px] text-emerald-400">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                </span>
-                live
-              </span>
-            </div>
-            <div className="divide-y divide-white/5">
-              {rotated.map((e, i) => (
-                <div
-                  key={`${e.text}-${i}`}
-                  className={`flex items-start gap-3 px-5 py-3 transition-colors ${i === 0 ? 'bg-white/[0.04]' : ''}`}
-                >
-                  <span className={`w-[92px] shrink-0 font-mono text-[11px] ${e.tone}`}>{e.agent}</span>
-                  <span className="flex-1 text-sm text-slate-300">{e.text}</span>
-                  <span className="shrink-0 font-mono text-[11px] text-slate-600">{e.time}</span>
-                </div>
-              ))}
-            </div>
+          <div className="rounded-3xl border border-white bg-white/80 p-5 shadow-sm">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">Current rhythm</h3>
+            <ul className="mt-4 space-y-3">
+              {AGENTS.map((a) => {
+                const preset = SCHEDULE_MAP[schedules[a.id] || 'daily'];
+                return (
+                  <li key={a.id} className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${a.glow}`} />
+                      <span className="truncate text-sm text-slate-600">{a.name}</span>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
+                      <span className={`h-1.5 w-1.5 rounded-full ${preset.dot}`} />
+                      {preset.chip}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
       </div>

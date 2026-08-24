@@ -1,71 +1,58 @@
 import React from 'react';
-import { GitBranch, Lock } from 'lucide-react';
-import { PIPELINE_STEPS, PRINCIPLES, PLATFORM_COVERAGE } from '@/data/agents';
+import { Workflow, Heart } from 'lucide-react';
+import { PIPELINE_STEPS, PRINCIPLES } from '@/data/agents';
+import { COVENANT, COVENANT_STATEMENT } from '@/data/covenant';
 
 const PipelineSection: React.FC = () => (
-  <section id="pipeline" className="relative border-b border-white/10 py-20">
+  <section id="pipeline" className="py-16">
     <div className="mx-auto max-w-7xl px-5 sm:px-8">
-      <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
-        <GitBranch className="h-3.5 w-3.5" /> Pipeline
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-500">
+        <Workflow className="h-3.5 w-3.5" /> How it works
       </div>
-      <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-        Each agent feeds the next
+      <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl">
+        Ingest, rank, benchmark, compound, direct
       </h2>
-      <p className="mt-3 max-w-2xl text-slate-400">
-        The value is not five isolated bots. It is the chain: discovery feeds ranking, ranking feeds teardown,
-        teardown feeds distribution.
+      <p className="mt-3 max-w-2xl text-slate-500">
+        The chain runs on the rhythm you set at the top of this page. Each stage hands clean work to the next, and the
+        last agent turns all of it into one path you can actually walk.
       </p>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {PIPELINE_STEPS.map((s, i) => (
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {PIPELINE_STEPS.map((s) => (
           <div
             key={s.step}
-            className="relative rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-white/25 hover:bg-white/[0.06]"
+            className="rounded-3xl border border-white bg-white/80 p-5 shadow-sm transition hover:shadow-md"
           >
-            <div className="font-mono text-3xl font-bold text-white/15">{s.step}</div>
-            <h3 className="mt-3 text-lg font-semibold text-white">{s.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">{s.body}</p>
-            {i < PIPELINE_STEPS.length - 1 && (
-              <div className="absolute -right-2 top-1/2 hidden h-px w-4 bg-white/20 lg:block" />
-            )}
+            <div className="text-2xl font-extrabold text-transparent [-webkit-text-stroke:1px_rgb(165,180,252)]">
+              {s.step}
+            </div>
+            <h3 className="mt-3 text-base font-bold text-slate-800">{s.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-500">{s.body}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-16 grid gap-10 lg:grid-cols-[1fr_1fr]">
-        <div>
-          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
-            <Lock className="h-3.5 w-3.5" /> Operating principles
+      <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {PRINCIPLES.map((p) => (
+          <div key={p.title} className="rounded-3xl bg-gradient-to-br from-indigo-50 to-emerald-50 p-5">
+            <h3 className="text-sm font-bold text-slate-800">{p.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{p.body}</p>
           </div>
-          <div className="mt-5 space-y-4">
-            {PRINCIPLES.map((p) => (
-              <div key={p.title} className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
-                <h4 className="text-sm font-semibold text-white">{p.title}</h4>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{p.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
+      </div>
 
-        <div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">Connected surface area</div>
-          <div className="mt-5 space-y-5">
-            {Object.entries(PLATFORM_COVERAGE).map(([group, items]) => (
-              <div key={group}>
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-300">{group}</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {items.map((p) => (
-                    <span
-                      key={p}
-                      className="rounded-lg border border-white/10 bg-black/40 px-2.5 py-1 font-mono text-[11px] text-slate-400 transition hover:border-white/30 hover:text-white"
-                    >
-                      {p}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="mt-12 overflow-hidden rounded-3xl border border-white bg-gradient-to-r from-rose-50 via-white to-sky-50 p-6 shadow-sm sm:p-9">
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-500">
+          <Heart className="h-4 w-4" /> The covenant we all keep
+        </div>
+        <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-700">{COVENANT_STATEMENT}</p>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {COVENANT.map((c) => (
+            <div key={c.id} className="rounded-2xl border border-white bg-white/80 p-4">
+              <h4 className="text-sm font-bold text-slate-800">{c.title}</h4>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{c.body}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

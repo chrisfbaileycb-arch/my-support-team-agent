@@ -67,15 +67,17 @@ const AgentConsole: React.FC<Props> = ({ agent }) => {
   }));
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/40 p-5 sm:p-6">
+    <div className={`rounded-3xl border ${agent.ring} ${agent.soft} p-5 sm:p-6`}>
       <div className="flex items-center gap-2">
         <TerminalSquare className={`h-4 w-4 ${agent.accent}`} />
-        <h4 className="font-mono text-xs uppercase tracking-[0.2em] text-slate-400">Live cycle · {agent.codename}</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+          Live cycle · {agent.codename}
+        </h4>
       </div>
 
-      <p className="mt-3 text-sm text-slate-400">
-        Give the agent a niche, market or product to focus on, then run a live cycle. It reports and ranks — it never
-        takes action on your behalf.
+      <p className="mt-3 text-sm text-slate-600">
+        Give the agent a niche, market or product to focus on, then ask it kindly to run a cycle. It reports and ranks
+        — it never takes action on your behalf.
       </p>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -83,14 +85,14 @@ const AgentConsole: React.FC<Props> = ({ agent }) => {
           value={focus}
           onChange={(e) => setFocus(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !loading) runCycle(); }}
-          placeholder="e.g. home fitness creators, or B2B SaaS onboarding"
-          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition focus:border-white/30"
+          placeholder="e.g. home fitness creators, or bookkeeping for small clinics"
+          className="flex-1 rounded-xl border border-white bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-300"
         />
         <button
           type="button"
           onClick={runCycle}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-black transition disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:opacity-60"
           style={{ backgroundColor: agent.accentHex }}
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
@@ -99,7 +101,7 @@ const AgentConsole: React.FC<Props> = ({ agent }) => {
       </div>
 
       {error && (
-        <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -108,32 +110,36 @@ const AgentConsole: React.FC<Props> = ({ agent }) => {
       {loading && (
         <div className="mt-5 space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl border border-white/5 bg-white/[0.04]" />
+            <div key={i} className="h-24 animate-pulse rounded-2xl border border-white bg-white/70" />
           ))}
-          <p className="font-mono text-xs text-slate-500">
-            sweeping {agent.scanTargets.slice(0, 4).join(' · ')} …
-          </p>
+          <p className="text-xs text-slate-400">sweeping {agent.scanTargets.slice(0, 4).join(' · ')} …</p>
         </div>
       )}
 
       {result && !loading && (
         <div className="mt-5 space-y-4">
           {result.headline && (
-            <p className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-sm text-slate-200">
+            <p className="rounded-2xl border border-white bg-white p-3 text-sm text-slate-700 shadow-sm">
               {result.headline}
             </p>
           )}
           {result.rawText && normalised.length === 0 && (
-            <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-black/60 p-4 text-xs text-slate-300">
+            <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-white bg-white p-4 text-xs text-slate-600 shadow-sm">
               {result.rawText}
             </pre>
           )}
           {normalised.map((o) => (
-            <OpportunityCard key={o.id} opp={o} agentId={agent.id} accent={agent.accent} accentHex={agent.accentHex} glow={agent.glow} />
-
+            <OpportunityCard
+              key={o.id}
+              opp={o}
+              agentId={agent.id}
+              accent={agent.accent}
+              accentHex={agent.accentHex}
+              glow={agent.glow}
+            />
           ))}
           {result.warning && (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 p-3 text-sm text-amber-200">
+            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{result.warning}</span>
             </div>
@@ -141,19 +147,19 @@ const AgentConsole: React.FC<Props> = ({ agent }) => {
         </div>
       )}
 
-      <div className="mt-6 rounded-xl border border-white/10 bg-black/50">
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">system_prompt.md</span>
+      <div className="mt-6 rounded-2xl border border-white bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
+          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">skill.md</span>
           <button
             type="button"
             onClick={copyPrompt}
-            className="inline-flex items-center gap-1.5 rounded-md border border-white/15 px-2.5 py-1 text-[11px] text-slate-300 transition hover:bg-white/10"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50"
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             {copied ? 'Copied' : 'Copy prompt'}
           </button>
         </div>
-        <pre className="max-h-56 overflow-auto whitespace-pre-wrap p-4 font-mono text-xs leading-relaxed text-slate-400">
+        <pre className="max-h-56 overflow-auto whitespace-pre-wrap p-4 font-mono text-xs leading-relaxed text-slate-500">
           {agent.systemPrompt}
         </pre>
       </div>
