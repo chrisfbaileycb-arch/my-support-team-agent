@@ -1,13 +1,25 @@
 import React from 'react';
-import { CalendarClock, RotateCcw, Sparkles } from 'lucide-react';
+import { CalendarClock, RotateCcw, Sparkles, Cloud, MonitorSmartphone } from 'lucide-react';
+
 import { AGENTS } from '@/data/agents';
 import { SCHEDULE_PRESETS, SCHEDULE_MAP, type ScheduleId } from '@/data/covenant';
 import { useSchedules } from '@/contexts/ScheduleContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const QUICK: ScheduleId[] = ['daily', 'weekdays', 'weekends', 'weekly-mon', 'ongoing', 'paused'];
 
+const relative = (iso?: string | null) => {
+  if (!iso) return null;
+  const h = Math.round((Date.now() - new Date(iso).getTime()) / 3600000);
+  if (h < 1) return 'ran just now';
+  if (h < 24) return `ran ${h}h ago`;
+  return `ran ${Math.round(h / 24)}d ago`;
+};
+
 const ScheduleBar: React.FC = () => {
-  const { schedules, setSchedule, setAll, resetRecommended, activeCount } = useSchedules();
+  const { schedules, lastRuns, synced, setSchedule, setAll, resetRecommended, activeCount } = useSchedules();
+  const { user } = useAuth();
+
 
   return (
     <section id="schedule" className="relative py-14">
@@ -23,14 +35,24 @@ const ScheduleBar: React.FC = () => {
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-slate-500">
                 Every agent keeps its own cadence — daily, Monday to Friday, weekends only, weekly on Monday, or
-                ongoing. Rest is allowed. Your choices are saved to this browser.
+                ongoing. Rest is allowed. A server-side job wakes each due agent once a day and stores what it finds.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  user && synced ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {user && synced ? <Cloud className="h-3.5 w-3.5" /> : <MonitorSmartphone className="h-3.5 w-3.5" />}
+
+                {user && synced ? 'Synced to your account' : 'This browser only — sign in to sync'}
+              </span>
               <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
                 {activeCount} of {AGENTS.length} awake
               </span>
+
               <button
                 type="button"
                 onClick={() => setAll('daily')}
@@ -103,6 +125,10 @@ const ScheduleBar: React.FC = () => {
                     <span className={`h-1.5 w-1.5 rounded-full ${preset.dot}`} />
                     {preset.detail}
                   </div>
+                  {relative(lastRuns[a.id]) && (
+                    <div className="mt-1 text-[10px] font-medium text-slate-400">{relative(lastRuns[a.id])}</div>
+                  )}
+
                 </div>
               );
             })}

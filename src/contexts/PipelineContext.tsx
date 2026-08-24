@@ -5,9 +5,11 @@ import {
   insertSaved,
   updateSavedStatus,
   deleteSaved,
+  claimLegacySaved,
   type SavedOpportunity,
   type PipelineStatus,
 } from '@/lib/pipeline';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PipelineContextValue {
   saved: SavedOpportunity[];
@@ -24,6 +26,8 @@ interface PipelineContextValue {
 const PipelineContext = createContext<PipelineContextValue | undefined>(undefined);
 
 export const PipelineProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [saved, setSaved] = useState<SavedOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,18 +36,29 @@ export const PipelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const refresh = useCallback(async () => {
     try {
       setError('');
-      const rows = await fetchSaved();
+      const rows = await fetchSaved(userId);
       setSaved(rows);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let cancelled = false;
+    const run = async () => {
+      if (userId) {
+        // Bring anything bookmarked before sign-in onto the account.
+        await claimLegacySaved(userId);
+      }
+      if (!cancelled) await refresh();
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, refresh]);
 
   const isSaved = useCallback(
     (title: string) => saved.some((s) => s.title.toLowerCase() === title.toLowerCase()),
@@ -55,7 +70,7 @@ export const PipelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (isSaved(opp.title)) return;
       setSavingId(opp.id);
       try {
-        const row = await insertSaved(opp, agentId);
+        const row = await insertSaved(opp, agentId, userId);
         setSaved((prev) => [row, ...prev]);
       } catch (e) {
         setError((e as Error).message);
@@ -63,29 +78,35 @@ export const PipelineProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSavingId(null);
       }
     },
-    [isSaved]
+    [isSaved, userId]
   );
 
-  const setStatus = useCallback(async (id: string, status: PipelineStatus) => {
-    setSaved((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
-    try {
-      await updateSavedStatus(id, status);
-    } catch (e) {
-      setError((e as Error).message);
-      refresh();
-    }
-  }, [refresh]);
+  const setStatus = useCallback(
+    async (id: string, status: PipelineStatus) => {
+      setSaved((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
+      try {
+        await updateSavedStatus(id, status);
+      } catch (e) {
+        setError((e as Error).message);
+        refresh();
+      }
+    },
+    [refresh]
+  );
 
-  const remove = useCallback(async (id: string) => {
-    const snapshot = saved;
-    setSaved((prev) => prev.filter((s) => s.id !== id));
-    try {
-      await deleteSaved(id);
-    } catch (e) {
-      setError((e as Error).message);
-      setSaved(snapshot);
-    }
-  }, [saved]);
+  const remove = useCallback(
+    async (id: string) => {
+      const snapshot = saved;
+      setSaved((prev) => prev.filter((s) => s.id !== id));
+      try {
+        await deleteSaved(id);
+      } catch (e) {
+        setError((e as Error).message);
+        setSaved(snapshot);
+      }
+    },
+    [saved]
+  );
 
   const value = useMemo(
     () => ({ saved, loading, error, savingId, isSaved, bookmark, setStatus, remove, refresh }),
