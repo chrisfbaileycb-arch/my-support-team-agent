@@ -68,11 +68,17 @@ const AgentConsole: React.FC<Props> = ({ agent }) => {
 
   return (
     <div className={`rounded-3xl border ${agent.ring} ${agent.soft} p-5 sm:p-6`}>
-      <div className="flex items-center gap-2">
-        <TerminalSquare className={`h-4 w-4 ${agent.accent}`} />
-        <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Live cycle · {agent.codename}
-        </h4>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <TerminalSquare className={`h-4 w-4 ${agent.accent}`} />
+          <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Live cycle · {agent.codename}
+          </h4>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-white/80 px-2.5 py-0.5 text-[10px] font-medium text-indigo-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Google Gemini 3.7 Flash
+        </span>
       </div>
 
       <p className="mt-3 text-sm text-slate-600">

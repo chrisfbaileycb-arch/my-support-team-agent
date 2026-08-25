@@ -40,8 +40,8 @@ const AuthModal: React.FC<Props> = ({ open, onClose, initialMode = 'signin' }) =
     try {
       if (mode === 'signup') {
         await signUp({ email: email.trim(), password, name: name.trim(), phone: phone.trim() });
-        // Every email collected is added to the member list.
-        fetch('https://famous.ai/api/crm/6a8bce37b1a9555656dee3ce/subscribe', {
+        // Member list dispatch via native Google endpoint
+        fetch('/api/briefing/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -50,7 +50,6 @@ const AuthModal: React.FC<Props> = ({ open, onClose, initialMode = 'signin' }) =
             phone: phone.trim() || undefined,
             sms_opt_in: smsOptIn === true,
             source: 'signup',
-            tags: ['member', 'covenant-accepted'],
           }),
         }).catch(() => undefined);
         setNotice('Welcome. Your covenant acceptance is saved to your account.');

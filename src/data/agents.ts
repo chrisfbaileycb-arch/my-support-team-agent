@@ -58,9 +58,9 @@ export const PLATFORM_COVERAGE: Record<string, string[]> = {
   Freelance: ['Upwork', 'Fiverr', 'Toptal', 'Contra', 'Freelancer', 'PeoplePerHour', 'Wellfound', 'We Work Remotely', 'Braintrust'],
   Commerce: ['Shopify', 'TikTok Shop', 'Temu', 'Alibaba', 'AliExpress', 'Etsy', 'Amazon', 'CJ Dropshipping', 'Printify'],
   Affiliate: ['Impact', 'ShareASale', 'PartnerStack', 'Amazon Associates', 'ClickBank', 'Digistore24', 'Rakuten'],
-  Signal: ['Google Trends', 'Reddit', 'X / Twitter', 'Product Hunt', 'GitHub Trending', 'Hacker News', 'TikTok Creative Center'],
-  Build: ['GitHub', 'Hugging Face', 'n8n', 'Make', 'Supabase', 'Vercel', 'Cloudflare Workers', 'Ollama'],
-  AgentPlatforms: ['Claude Skills', 'OpenAI Agents SDK', 'LangGraph', 'CrewAI', 'AutoGen', 'Dify', 'Flowise', 'MCP Registry', 'Letta', 'Smolagents'],
+  Signal: ['Google Trends', 'Google Search Console', 'Reddit', 'X / Twitter', 'Product Hunt', 'GitHub Trending', 'Hacker News', 'TikTok Creative Center'],
+  Build: ['Google Cloud Run', 'Google Gemini 3.7', 'Google Vertex AI', 'Google Workspace API', 'GitHub', 'Hugging Face', 'n8n', 'Cloudflare Workers', 'Ollama'],
+  AgentPlatforms: ['Google Gemini Models & SDK', 'Claude Skills', 'OpenAI Agents SDK', 'LangGraph', 'CrewAI', 'AutoGen', 'Dify', 'Flowise', 'MCP Registry', 'Letta'],
 };
 
 export const AGENTS: Agent[] = [

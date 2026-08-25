@@ -20,7 +20,7 @@ const BriefingSignup: React.FC = () => {
     setStatus('loading');
     setMessage('');
     try {
-      const res = await fetch('https://famous.ai/api/crm/6a8bce37b1a9555656dee3ce/subscribe', {
+      const res = await fetch('/api/briefing/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -29,12 +29,11 @@ const BriefingSignup: React.FC = () => {
           phone: phone || undefined,
           sms_opt_in: smsOptIn === true,
           source: 'daily-briefing-signup',
-          tags: ['newsletter', 'daily-briefing', 'maximize-your-future'],
         }),
       });
       if (!res.ok) throw new Error('Subscription failed');
       setStatus('done');
-      setMessage('You are on the list. Your team reports at 06:00 local.');
+      setMessage('You are on the list. Your team reports via Gmail and Gemini digest at 06:00 local.');
       setName('');
       setEmail('');
       setPhone('');

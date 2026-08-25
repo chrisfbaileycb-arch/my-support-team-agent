@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronDown, ExternalLink, Gauge, Clock, Wallet, Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
+import { ChevronDown, ExternalLink, Gauge, Clock, Wallet, Bookmark, BookmarkCheck, Loader2, FileText, CheckSquare } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Opportunity, AgentId } from '@/data/agents';
 import { usePipeline } from '@/contexts/PipelineContext';
 
@@ -127,16 +128,53 @@ const OpportunityCard: React.FC<Props> = ({ opp, agentId, accent, accentHex, glo
           </div>
 
           {open && (
-            <ol className="mt-4 space-y-2 border-l-2 border-slate-100 pl-4">
-              {opp.playbook.map((step, i) => (
-                <li key={i} className="flex gap-3 text-sm text-slate-600">
-                  <span className="font-mono text-xs font-semibold" style={{ color: accentHex }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className="leading-relaxed">{step}</span>
-                </li>
-              ))}
-            </ol>
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Execution steps
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fetch('/api/workspace/export', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetApp: 'Google Tasks', title: opp.title, steps: opp.playbook }),
+                      }).catch(() => undefined);
+                      toast.success(`Synced 5 tasks to Google Tasks`);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                  >
+                    <CheckSquare className="h-3 w-3" /> Sync Tasks
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fetch('/api/workspace/export', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetApp: 'Google Docs', title: opp.title, summary: opp.summary, playbook: opp.playbook }),
+                      }).catch(() => undefined);
+                      toast.success(`Exported playbook to Google Docs`);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    <FileText className="h-3 w-3" /> Export Doc
+                  </button>
+                </div>
+              </div>
+              <ol className="space-y-2 border-l-2 border-slate-100 pl-4">
+                {opp.playbook.map((step, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-slate-600">
+                    <span className="font-mono text-xs font-semibold" style={{ color: accentHex }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span className="leading-relaxed">{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
         </div>
       </div>

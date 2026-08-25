@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Sun, LogOut, UserCircle2, Route } from 'lucide-react';
+import { Menu, X, Sun, LogOut, UserCircle2, Route, ArrowRightLeft } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BRAND } from '@/data/covenant';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,11 @@ const LINKS = [
   { id: 'feed', label: 'Live Feed' },
 ];
 
-const SiteHeader: React.FC = () => {
+interface SiteHeaderProps {
+  onOpenBridge?: () => void;
+}
+
+const SiteHeader: React.FC<SiteHeaderProps> = ({ onOpenBridge }) => {
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -60,6 +64,15 @@ const SiteHeader: React.FC = () => {
               {l.label}
             </button>
           ))}
+          {onOpenBridge && (
+            <button
+              type="button"
+              onClick={onOpenBridge}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-amber-700 bg-amber-50/70 hover:bg-amber-100/70 transition"
+            >
+              <ArrowRightLeft className="h-3.5 w-3.5" /> Intermediary Bridge
+            </button>
+          )}
           <Link
             to="/final-report"
             className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50"

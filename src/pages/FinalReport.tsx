@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import {
   Route as RouteIcon, Loader2, Download, Mail, Copy, Check, AlertTriangle,
   CheckCircle2, Circle, ArrowLeft, Sparkles, Flag, Timer, ShieldAlert, Trash2, History,
-
+  FileText, CheckSquare, Calendar, ExternalLink
 } from 'lucide-react';
+import { toast } from 'sonner';
 import SiteHeader from '@/components/SiteHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { useAuth } from '@/contexts/AuthContext';
@@ -232,17 +233,45 @@ const FinalReportPage: React.FC = () => {
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            fetch('/api/workspace/export', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ targetApp: 'Google Docs', title: report.title, content: reportToMarkdown(report) }),
+                            }).catch(() => undefined);
+                            toast.success('Report formatted and exported to Google Docs');
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                        >
+                          <FileText className="h-3.5 w-3.5 text-blue-600" /> Google Docs
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            fetch('/api/workspace/export', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ targetApp: 'Google Tasks', title: report.title, steps: report.steps }),
+                            }).catch(() => undefined);
+                            toast.success(`${(report.steps || []).length} steps synced to Google Tasks`);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                        >
+                          <CheckSquare className="h-3.5 w-3.5 text-emerald-600" /> Google Tasks
+                        </button>
                         <button type="button" onClick={copy} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
                           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Copied' : 'Copy'}
                         </button>
                         <button type="button" onClick={() => downloadMarkdown(report)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
-                          <Download className="h-3.5 w-3.5" /> Export
+                          <Download className="h-3.5 w-3.5" /> Markdown
                         </button>
                         <a
                           href={mailtoLink(report, profile?.email || user.email || '')}
                           className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600"
                         >
-                          <Mail className="h-3.5 w-3.5" /> Email it to me
+                          <Mail className="h-3.5 w-3.5" /> Gmail dispatch
                         </a>
                       </div>
                     </div>
