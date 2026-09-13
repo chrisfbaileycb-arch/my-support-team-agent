@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ArrowRightLeft, Key, ShieldCheck, Copy, Check, Zap, Globe } from 'lucide-react';
+import { X, Key, ShieldCheck, Copy, Check, Zap, Globe, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getAuthHeaders } from '@/lib/google-storage';
 
 interface BridgeIntermediaryModalProps {
   open: boolean;
@@ -11,6 +12,9 @@ interface BridgeIntermediaryModalProps {
 export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = ({ open, onClose }) => {
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedEndpoint, setCopiedEndpoint] = useState(false);
+  const [activeKey, setActiveKey] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -21,10 +25,51 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
+  // Load existing keys
+  useEffect(() => {
+    if (!open) return;
+    fetch('/api/bridge/keys', { headers: getAuthHeaders() })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((keys) => {
+        if (Array.isArray(keys) && keys.length > 0) {
+          setActiveKey(keys[0].key_prefix || keys[0].keyPrefix || 'myf_bridge_...');
+        }
+      })
+      .catch(() => undefined);
+  }, [open]);
+
   if (!open) return null;
 
-  const sampleKey = 'myf_bridge_live_849204918204';
-  const proxyEndpoint = `${window.location.origin}/api/proxy/agent`;
+  const displayKey = newlyCreatedKey || activeKey || 'myf_bridge_preview_demo';
+  const proxyEndpoint = typeof window !== 'undefined' ? `${window.location.origin}/api/proxy/agent` : '/api/proxy/agent';
+
+  const handleGenerateNewKey = async () => {
+    try {
+      setIsGenerating(true);
+      const res = await fetch('/api/bridge/keys', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: 'Kitchen&Code Intermediary Client',
+          targetSite: 'https://kitchenandcode.com',
+          permissions: ['proxy:agent', 'sync:catalog', 'read:playbooks'],
+          rateLimit: 60,
+        }),
+      });
+      const data = await res.json();
+      if (data.fullKey) {
+        setNewlyCreatedKey(data.fullKey);
+        setActiveKey(data.fullKey);
+        toast.success('Generated real Intermediary Bridge Key');
+      } else {
+        toast.error('Failed to create key');
+      }
+    } catch {
+      toast.error('Network error creating bridge key');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const copyToClipboard = (text: string, isKey: boolean) => {
     navigator.clipboard.writeText(text);
@@ -78,10 +123,10 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
           <div className="rounded-xl border border-amber-200/70 bg-amber-50/60 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
             <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              Isolated Architectural Boundary
+              Isolated Architectural Boundary &amp; Hashed Persistence
             </h4>
             <p className="mt-1 text-xs leading-relaxed text-amber-800/90 dark:text-amber-200/80">
-              Your server database and Google credentials remain strictly confidential. External webhooks communicate exclusively over authenticated Proxy Agent routes.
+              Your server database and API secrets remain strictly confidential. Only cryptographically hashed SHA-256 tokens are persisted in storage. External callers access agents exclusively over authenticated Proxy Agent routes.
             </p>
           </div>
 
@@ -105,15 +150,26 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                Intermediary Bearer Token
-              </label>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono dark:border-slate-800 dark:bg-slate-950 text-slate-800 dark:text-slate-200">
-                <Key className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <span className="flex-1 truncate">{sampleKey}</span>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  Intermediary Bearer Token
+                </label>
                 <button
                   type="button"
-                  onClick={() => copyToClipboard(sampleKey, true)}
+                  onClick={handleGenerateNewKey}
+                  disabled={isGenerating}
+                  className="text-[11px] font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+                >
+                  {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                  New Key
+                </button>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono dark:border-slate-800 dark:bg-slate-950 text-slate-800 dark:text-slate-200">
+                <Key className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span className="flex-1 truncate">{displayKey}</span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(displayKey, true)}
                   className="inline-flex items-center gap-1 rounded-md bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-medium border border-slate-200 dark:border-slate-700 shadow-sm"
                 >
                   {copiedKey ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
@@ -123,18 +179,24 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
             </div>
           </div>
 
+          {newlyCreatedKey && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-800">
+              <span className="font-semibold">Security Notice:</span> Make sure to copy this raw secret key now. For safety, only the hashed representation is stored in the database.
+            </div>
+          )}
+
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4">
             <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-amber-500" /> Example cURL Integration Payload
             </h5>
             <pre className="text-[10px] font-mono text-slate-700 dark:text-slate-300 overflow-x-auto leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
 {`curl -X POST "${proxyEndpoint}" \\
-  -H "Authorization: Bearer ${sampleKey}" \\
+  -H "Authorization: Bearer ${displayKey}" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "agentId": "bridge-nexus",
+    "agentId": "freelance-scout",
     "sourceClient": "Kitchen&Code",
-    "focus": "Restaurant Shift Ops & LedgerSync"
+    "focus": "Restaurant Shift Ops & Margin Optimization"
   }'`}
             </pre>
           </div>

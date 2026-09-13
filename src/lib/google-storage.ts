@@ -1,5 +1,5 @@
 // Google Native Client & Storage Adapter
-// Replaces previous third-party builder lock-ins with Google Gemini API & local-first caching
+// Direct, resilient interface to server SQLite DB & Google Gemini endpoints
 
 export interface QueryResult<T> {
   data: T | null;
@@ -13,6 +13,31 @@ interface TableFilter {
   op: 'eq' | 'is';
   val: FilterValue;
 }
+
+export const getStoredAuthSession = (): {
+  user?: { id: string; email?: string; [key: string]: unknown };
+  session?: { access_token: string; expires_at?: string };
+} | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('myf_google_auth');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getAuthHeaders = (): Record<string, string> => {
+  const s = getStoredAuthSession();
+  const token = s?.session?.access_token;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
 
 class GoogleTableQuery<T = Record<string, unknown>> {
   private tableName: string;
@@ -49,6 +74,7 @@ class GoogleTableQuery<T = Record<string, unknown>> {
   }
 
   private getLocalStorageItems(): Record<string, unknown>[] {
+    if (typeof window === 'undefined') return [];
     try {
       const raw = localStorage.getItem(`myf_${this.tableName}`);
       return raw ? JSON.parse(raw) : [];
@@ -58,6 +84,7 @@ class GoogleTableQuery<T = Record<string, unknown>> {
   }
 
   private setLocalStorageItems(items: Record<string, unknown>[]) {
+    if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(`myf_${this.tableName}`, JSON.stringify(items));
     } catch (e) {
@@ -96,20 +123,39 @@ class GoogleTableQuery<T = Record<string, unknown>> {
   private async execute(): Promise<QueryResult<T[]>> {
     try {
       let items: Record<string, unknown>[] = [];
-      // Try server endpoint first
       let apiEndpoint = '';
+
       if (this.tableName === 'agent_runs') apiEndpoint = '/api/runs';
       else if (this.tableName === 'saved_opportunities') apiEndpoint = '/api/pipeline';
       else if (this.tableName === 'final_reports') apiEndpoint = '/api/reports';
       else if (this.tableName === 'agent_schedules') apiEndpoint = '/api/schedules';
+      else if (this.tableName === 'profiles') apiEndpoint = '/api/auth/profile';
 
       if (apiEndpoint) {
         try {
-          const userFilter = this.filters.find((f) => f.field === 'user_id');
-          const url = userFilter?.val ? `${apiEndpoint}?userId=${encodeURIComponent(String(userFilter.val))}` : apiEndpoint;
-          const resp = await fetch(url);
+          const userFilter = this.filters.find((f) => f.field === 'user_id' || f.field === 'id');
+          let url = apiEndpoint;
+          if (userFilter?.val && apiEndpoint !== '/api/auth/profile') {
+            url += `?userId=${encodeURIComponent(String(userFilter.val))}`;
+          }
+
+          const resp = await fetch(url, { headers: getAuthHeaders() });
           if (resp.ok) {
-            items = await resp.json();
+            const json = await resp.json();
+            if (this.tableName === 'profiles') {
+              items = json.profile ? [json.profile] : [];
+            } else if (Array.isArray(json)) {
+              items = json;
+            } else if (json && Array.isArray(json.runs)) {
+              items = json.runs;
+            } else if (json && Array.isArray(json.items)) {
+              items = json.items;
+            } else {
+              items = this.getLocalStorageItems();
+            }
+            this.setLocalStorageItems(items);
+          } else {
+            items = this.getLocalStorageItems();
           }
         } catch {
           items = this.getLocalStorageItems();
@@ -118,7 +164,7 @@ class GoogleTableQuery<T = Record<string, unknown>> {
         items = this.getLocalStorageItems();
       }
 
-      // Apply in-memory filters
+      // Apply client-side filters
       let result = items.filter((item) => {
         return this.filters.every((f) => {
           if (f.op === 'eq') return String(item[f.field]) === String(f.val);
@@ -156,23 +202,40 @@ class GoogleTableQuery<T = Record<string, unknown>> {
     list.unshift(item);
     this.setLocalStorageItems(list);
 
-    // Sync to server
+    // Sync to real server database
     try {
       if (this.tableName === 'saved_opportunities') {
-        await fetch('/api/pipeline', {
+        const res = await fetch('/api/pipeline', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(item),
         });
+        if (res.ok) {
+          const saved = await res.json();
+          return {
+            select: () => ({
+              maybeSingle: async () => ({ data: saved as unknown as T, error: null }),
+              single: async () => ({ data: saved as unknown as T, error: null }),
+            }),
+            data: saved,
+            error: null,
+          };
+        }
       } else if (this.tableName === 'agent_runs') {
         await fetch('/api/runs', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
+          body: JSON.stringify(item),
+        });
+      } else if (this.tableName === 'profiles') {
+        await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: getAuthHeaders(),
           body: JSON.stringify(item),
         });
       }
     } catch {
-      // offline fallback
+      // offline buffer preserved
     }
 
     return {
@@ -202,12 +265,23 @@ class GoogleTableQuery<T = Record<string, unknown>> {
       if (this.tableName === 'agent_schedules') {
         await fetch('/api/schedules', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entries: Array.isArray(payload) ? Object.fromEntries(payload.map((p) => [String(p.agent_id), String(p.cadence)])) : { [String(payload.agent_id)]: String(payload.cadence) } }),
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            entries: Array.isArray(payload)
+              ? Object.fromEntries(payload.map((p) => [String(p.agent_id), String(p.cadence)]))
+              : { [String(payload.agent_id)]: String(payload.cadence) },
+          }),
+        });
+      } else if (this.tableName === 'profiles') {
+        const item = Array.isArray(payload) ? payload[0] : payload;
+        await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(item),
         });
       }
     } catch {
-      // offline fallback
+      // offline buffer preserved
     }
 
     return { data: items, error: null };
@@ -226,24 +300,29 @@ class GoogleTableQuery<T = Record<string, unknown>> {
     });
     this.setLocalStorageItems(list);
 
-    // Call server updates
     try {
       const idFilter = this.filters.find((f) => f.field === 'id');
       if (idFilter && this.tableName === 'saved_opportunities') {
         await fetch(`/api/pipeline/${idFilter.val}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(patch),
         });
       } else if (idFilter && this.tableName === 'final_reports' && patch.completed_steps) {
         await fetch(`/api/reports/${idFilter.val}/steps`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ completed: patch.completed_steps }),
+        });
+      } else if (this.tableName === 'profiles') {
+        await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(patch),
         });
       }
     } catch {
-      // offline fallback
+      // offline buffer preserved
     }
 
     return {
@@ -269,9 +348,17 @@ class GoogleTableQuery<T = Record<string, unknown>> {
         const list = this.getLocalStorageItems().filter((item) => String(item[field]) !== String(val));
         this.setLocalStorageItems(list);
         if (field === 'id' && this.tableName === 'saved_opportunities') {
-          try { await fetch(`/api/pipeline/${val}`, { method: 'DELETE' }); } catch { /* offline */ }
+          try {
+            await fetch(`/api/pipeline/${val}`, { method: 'DELETE', headers: getAuthHeaders() });
+          } catch {
+            /* offline */
+          }
         } else if (field === 'id' && this.tableName === 'final_reports') {
-          try { await fetch(`/api/reports/${val}`, { method: 'DELETE' }); } catch { /* offline */ }
+          try {
+            await fetch(`/api/reports/${val}`, { method: 'DELETE', headers: getAuthHeaders() });
+          } catch {
+            /* offline */
+          }
         }
         return { error: null };
       },
@@ -291,16 +378,15 @@ class GoogleFunctions {
 
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(body),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const errorText = await res.text();
-        return { data: null, error: new Error(errorText || `Function ${functionName} failed`) };
+        return { data: null, error: new Error(data.error || `Server request failed with status ${res.status}`) };
       }
 
-      const data = await res.json();
       return { data, error: null };
     } catch (err) {
       return { data: null, error: err as Error };
@@ -310,6 +396,7 @@ class GoogleFunctions {
 
 interface AuthSession {
   access_token: string;
+  expires_at?: string;
   user?: { id: string; email?: string; [key: string]: unknown };
 }
 
@@ -318,15 +405,11 @@ class GoogleAuth {
   private authListeners: Array<(event: string, session: AuthSession | null) => void> = [];
 
   private getSessionFromStorage(): { user?: { id: string; email?: string }; session?: AuthSession } | null {
-    try {
-      const raw = localStorage.getItem('myf_google_auth');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
+    return getStoredAuthSession();
   }
 
   private saveSession(user: { id: string; email?: string }, session: AuthSession) {
+    if (typeof window === 'undefined') return;
     try {
       localStorage.setItem('myf_google_auth', JSON.stringify({ user, session }));
     } catch (e) {
@@ -357,17 +440,14 @@ class GoogleAuth {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Signup failed');
+      if (!res.ok) {
+        return { data: null, error: new Error(data.error || 'Signup failed') };
+      }
       this.saveSession(data.user, data.session);
       this.notify('SIGNED_IN', data.session);
       return { data, error: null };
-    } catch {
-      // Local fallback for offline mode
-      const user = { id: 'usr_' + Date.now(), email, user_metadata: options?.data || {} };
-      const session = { access_token: 'google_local_token', user };
-      this.saveSession(user, session);
-      this.notify('SIGNED_IN', session);
-      return { data: { user, session }, error: null };
+    } catch (err) {
+      return { data: null, error: err as Error };
     }
   }
 
@@ -379,24 +459,38 @@ class GoogleAuth {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Signin failed');
+      if (!res.ok) {
+        return { data: null, error: new Error(data.error || 'Invalid credentials') };
+      }
       this.saveSession(data.user, data.session);
       this.notify('SIGNED_IN', data.session);
       return { data, error: null };
-    } catch {
-      const user = { id: 'usr_' + Date.now(), email };
-      const session = { access_token: 'google_local_token', user };
-      this.saveSession(user, session);
-      this.notify('SIGNED_IN', session);
-      return { data: { user, session }, error: null };
+    } catch (err) {
+      return { data: null, error: err as Error };
     }
   }
 
   async signOut() {
-    try {
-      localStorage.removeItem('myf_google_auth');
-    } catch (e) {
-      console.warn('Storage signout error', e);
+    const token = getStoredAuthSession()?.session?.access_token;
+    if (token) {
+      try {
+        await fetch('/api/auth/signout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch {
+        // ignore network error on signout
+      }
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('myf_google_auth');
+      } catch (e) {
+        console.warn('Storage signout error', e);
+      }
     }
     this.notify('SIGNED_OUT', null);
     return { error: null };
@@ -417,7 +511,11 @@ class GoogleAuth {
 
   private notify(event: string, session: AuthSession | null) {
     this.authListeners.forEach((cb) => {
-      try { cb(event, session); } catch (e) { console.warn('Auth callback error', e); }
+      try {
+        cb(event, session);
+      } catch (e) {
+        console.warn('Auth callback error', e);
+      }
     });
   }
 }
@@ -433,3 +531,4 @@ class GoogleNativeClient {
 
 export const googleClient = new GoogleNativeClient();
 export const supabase = googleClient;
+

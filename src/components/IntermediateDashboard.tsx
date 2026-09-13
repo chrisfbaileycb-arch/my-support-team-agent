@@ -5,6 +5,7 @@ import {
   Plus, Server, Key, Play
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getAuthHeaders } from '@/lib/google-storage';
 
 interface ProxyLog {
   id: string;
@@ -49,9 +50,10 @@ export const IntermediateDashboard: React.FC = () => {
   const fetchBridgeData = async () => {
     try {
       setLoading(true);
+      const headers = getAuthHeaders();
       const [keysRes, logsRes] = await Promise.all([
-        fetch('/api/bridge/keys').then((r) => (r.ok ? r.json() : [])),
-        fetch('/api/proxy/logs').then((r) => (r.ok ? r.json() : [])),
+        fetch('/api/bridge/keys', { headers }).then((r) => (r.ok ? r.json() : [])),
+        fetch('/api/proxy/logs', { headers }).then((r) => (r.ok ? r.json() : [])),
       ]);
       setBridgeKeys(keysRes || []);
       setLogs(logsRes || []);
@@ -73,7 +75,7 @@ export const IntermediateDashboard: React.FC = () => {
     try {
       const res = await fetch('/api/bridge/keys', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           name: keyName,
           targetSite,
@@ -82,7 +84,7 @@ export const IntermediateDashboard: React.FC = () => {
       });
       const data = await res.json();
       if (data.key) {
-        setGeneratedKey(data.fullKey || data.key.hashedKey);
+        setGeneratedKey(data.fullKey || data.key.hashed_key || data.key.hashedKey);
         fetchBridgeData();
         toast.success('Generated new Intermediary Proxy Key');
       }
@@ -96,7 +98,7 @@ export const IntermediateDashboard: React.FC = () => {
     try {
       const res = await fetch('/api/bridge/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           sourceSite: 'Kitchen&Code',
           syncCategories: ['Cookbooks', 'AgentFlow', 'TeamShift', 'LedgerSync'],
