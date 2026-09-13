@@ -60,7 +60,10 @@ export function verifyPassword(password: string, hash: string, salt: string): bo
 }
 
 // Session Creation - Hashes token at rest, returns raw token only once
-export function createSession(userId: string, deviceLabel?: string): { sessionToken: string; expiresAt: string } {
+export function createSession(
+  userId: string,
+  deviceOptions?: string | { ipAddress?: string; userAgent?: string }
+): { token: string; sessionToken: string; expiresAt: string } {
   const db = getDatabase();
   const rawToken = 'myf_sess_' + crypto.randomBytes(32).toString('hex');
   const tokenHash = hashSessionToken(rawToken);
@@ -68,13 +71,23 @@ export function createSession(userId: string, deviceLabel?: string): { sessionTo
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
   const id = 'sess_' + crypto.randomBytes(12).toString('hex');
 
+  const label = typeof deviceOptions === 'string'
+    ? deviceOptions
+    : (deviceOptions?.userAgent?.slice(0, 100) || 'Standard Session');
+
   const stmt = db.prepare(`
     INSERT INTO sessions (id, token, token_hash, user_id, expires_at, created_at, issued_at, last_used_at, revoked_at, device_label)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
   `);
-  stmt.run(id, tokenHash, tokenHash, userId, expiresAt, now, now, now, deviceLabel || 'Standard Session');
+  stmt.run(id, tokenHash, tokenHash, userId, expiresAt, now, now, now, label);
 
-  return { sessionToken: rawToken, expiresAt };
+  return { token: rawToken, sessionToken: rawToken, expiresAt };
+}
+
+export function validateSession(rawToken: string): { userId: string; user: AuthenticatedUser; session: UserSession } | null {
+  const result = getSessionUser(rawToken);
+  if (!result) return null;
+  return { userId: result.user.id, user: result.user, session: result.session };
 }
 
 // Revoke a specific session by raw token

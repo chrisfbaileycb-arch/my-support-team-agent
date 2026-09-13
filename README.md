@@ -393,10 +393,42 @@ The application is pre-configured to bind to `0.0.0.0:3000`. For Google Cloud Ru
 
 ---
 
+## SQLite Production Posture & Scaling Architecture
+
+The platform uses Node.js native SQLite (`node:sqlite`) with production-hardened concurrency semantics:
+
+### 1. Concurrency & Journal Configuration
+- **WAL Mode Enabled**: Initialized automatically via `PRAGMA journal_mode = WAL;`. Write-Ahead Logging allows concurrent readers to execute unhindered while background writes complete.
+- **Synchronous NORMAL**: `PRAGMA synchronous = NORMAL;` optimizes write latency without compromising database integrity across crashes.
+- **Busy Timeout & Foreign Keys**: `PRAGMA busy_timeout = 5000;` and `PRAGMA foreign_keys = ON;` enforce relational referential integrity.
+- **Atomic Concurrency (Lease Claiming)**: Multi-worker and background scheduler jobs claim work using atomic `UPDATE ... WHERE claimed_at IS NULL` semantics with lease timeouts, preventing double-execution races.
+
+### 2. Single-Instance Container Lifecycle
+- **Topology**: Designed as an authoritative single-instance container or stateful set.
+- **Storage Persistence**: A persistent volume or network disk (e.g. Google Cloud Storage FUSE or Cloud Run Network File System mount) MUST be mapped to `./data` (or the directory configured via `DATABASE_PATH`). Ephemeral container restarts preserve all history, sessions, rate-limit buckets, and pipeline items without data loss.
+
+### 3. Backup & Snapshot Best Practices
+- **Online Hot Backups**: SQLite's VACUUM INTO or sqlite3 online backup command can be executed live while the application is receiving traffic:
+  ```bash
+  sqlite3 ./data/myf.sqlite ".backup './backups/backup-$(date +%F).sqlite'"
+  ```
+- **Automated Cron Snapshotting**: Mount an automated snapshot script to ship encrypted backups daily to Google Cloud Storage (`gsutil cp`).
+
+### 4. Zero-Downtime Migration Path to PostgreSQL / Cloud SQL
+When enterprise load requires horizontal read/write multi-master scaling:
+1. **Schema Parity**: The database schema in `server/db.ts` uses ANSI standard types (`TEXT`, `INTEGER`, `REAL`, `JSON`) compatible directly with PostgreSQL.
+2. **Connector Swap**: Replace `node:sqlite` connection factory in `server/db.ts` with `@neondatabase/serverless`, `pg`, or Drizzle ORM connecting to Cloud SQL (PostgreSQL).
+3. **Session & Rate-Limit Compatibility**: All queries use parameterized statements (`?` / `$1`) and standard SQL syntax, enabling seamless transition without rewriting business logic.
+
+---
+
 ## Security & Telemetry Audit
 
 - **Zero Client-Side Secret Exposure**: All API keys, including `GEMINI_API_KEY`, operate strictly on the Express server. The browser client never receives API keys.
 - **Cryptographic Hashing**: All Intermediary Bridge tokens are generated with high entropy and stored exclusively as SHA-256 digests. Raw keys are presented to the operator only once upon creation.
+- **Session Protection at Rest**: User session tokens are hashed with SHA-256 before storage; database compromises cannot yield valid active bearer tokens.
+- **Strict Server-Side Identity**: User authorization is derived exclusively from validated bearer sessions (`req.user.id`). Client-provided user IDs, query parameters, and body keys are never trusted for private resource access.
+- **Truthful Provenance**: All findings and reports declare their origin explicitly (`LIVE_SOURCE`, `MODEL_INFERENCE`, or `SIMULATED_DEMO`).
 - **Comprehensive Audit Trails**: Every key revocation, sweep execution, pipeline status change, and proxy request is permanently logged in `audit_logs` and `proxy_logs` with timestamps, latency, and client IP addresses.
 
 ---

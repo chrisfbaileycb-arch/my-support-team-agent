@@ -157,11 +157,35 @@ const RunHistory: React.FC = () => {
 
                 {latestForSelected && (
                   <div className="mt-5 space-y-4">
-                    {latestForSelected.headline && (
-                      <p className="rounded-2xl border border-white bg-white p-3 text-sm text-slate-700 shadow-sm">
-                        {latestForSelected.headline}
-                      </p>
-                    )}
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white bg-white/90 p-3 shadow-sm">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-800">
+                          {latestForSelected.headline || 'Cycle completed'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {latestForSelected.execution_mode && (
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                              latestForSelected.execution_mode === 'LIVE_RETRIEVAL'
+                                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : latestForSelected.execution_mode === 'MIXED_RETRIEVAL'
+                                ? 'border border-teal-200 bg-teal-50 text-teal-700'
+                                : latestForSelected.execution_mode === 'MODEL_ONLY'
+                                ? 'border border-purple-200 bg-purple-50 text-purple-700'
+                                : 'border border-slate-200 bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {latestForSelected.execution_mode.replace('_', ' ')}
+                          </span>
+                        )}
+                        {Boolean(latestForSelected.evidence_count) && (
+                          <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                            {latestForSelected.evidence_count} sources swept
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     {(latestForSelected.findings || []).slice(0, 3).map((f, i) => (
                       <OpportunityCard
                         key={`${latestForSelected.id}-${i}`}
@@ -210,8 +234,13 @@ const RunHistory: React.FC = () => {
                           <span className="block truncate text-xs text-slate-600">
                             {ok ? r.headline || `${(r.findings || []).length} findings` : r.error || 'cycle failed'}
                           </span>
-                          <span className="text-[10px] text-slate-400">
-                            {r.trigger} · {timeAgo(r.created_at)}
+                          <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                            <span>{r.trigger} · {timeAgo(r.created_at)}</span>
+                            {r.execution_mode && (
+                              <span className="font-mono text-[9px] uppercase text-slate-500">
+                                · {r.execution_mode}
+                              </span>
+                            )}
                           </span>
                         </span>
                       </button>

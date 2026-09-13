@@ -139,7 +139,10 @@ class GoogleTableQuery<T = Record<string, unknown>> {
             url += `?userId=${encodeURIComponent(String(userFilter.val))}`;
           }
 
-          const resp = await fetch(url, { headers: getAuthHeaders() });
+          let resp = await fetch(url, { headers: getAuthHeaders() });
+          if (resp.status === 401 && apiEndpoint === '/api/runs') {
+            resp = await fetch('/api/demo/runs');
+          }
           if (resp.ok) {
             const json = await resp.json();
             if (this.tableName === 'profiles') {
@@ -371,10 +374,18 @@ class GoogleFunctions {
   async invoke(functionName: string, { body }: { body: Record<string, unknown> }) {
     try {
       let endpoint = '';
-      if (functionName === 'run-agent') endpoint = '/api/agent/run';
-      else if (functionName === 'axis-report') endpoint = '/api/reports/generate';
-      else if (functionName === 'run-schedules') endpoint = '/api/runs/trigger';
-      else endpoint = `/api/${functionName}`;
+      const session = getStoredAuthSession();
+      const hasToken = Boolean(session?.session?.access_token);
+
+      if (functionName === 'run-agent') {
+        endpoint = hasToken ? '/api/agent/run' : '/api/demo/agent/run';
+      } else if (functionName === 'axis-report') {
+        endpoint = '/api/reports/generate';
+      } else if (functionName === 'run-schedules') {
+        endpoint = '/api/runs/trigger';
+      } else {
+        endpoint = `/api/${functionName}`;
+      }
 
       const res = await fetch(endpoint, {
         method: 'POST',

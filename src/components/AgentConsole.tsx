@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Loader2, Copy, Check, TerminalSquare, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import type { Agent, Opportunity } from '@/data/agents';
+import type { Agent, Opportunity, ProvenanceState, RetrievedEvidenceItem } from '@/data/agents';
 import OpportunityCard from '@/components/OpportunityCard';
 
 interface Props {
@@ -52,18 +52,25 @@ const AgentConsole: React.FC<Props> = ({ agent }) => {
   };
 
   const normalised: Opportunity[] = (result?.findings || []).map((f, i) => ({
-    id: `live-${i}`,
+    id: (f as { id?: string }).id || `live-${i}`,
     rank: Number(f.rank) || i + 1,
     title: f.title || 'Untitled finding',
     source: f.source || agent.codename,
-    sourceUrl: (f as { sourceUrl?: string }).sourceUrl || '#',
+    sourceUrl: (f as { sourceUrl?: string; source_url?: string }).sourceUrl || (f as { source_url?: string }).source_url || '#',
     summary: f.summary || '',
     difficulty: Math.min(10, Math.max(1, Number(f.difficulty) || 5)),
     score: Math.min(100, Math.max(0, Number(f.score) || 70)),
     payout: f.payout || '—',
-    timeToValue: f.timeToValue || '—',
+    timeToValue: f.timeToValue || (f as { time_to_value?: string }).time_to_value || '—',
     tags: Array.isArray(f.tags) ? f.tags.slice(0, 4) : [],
     playbook: Array.isArray(f.playbook) ? f.playbook : [],
+    provenance: (f as { provenance?: ProvenanceState }).provenance,
+    is_verified: (f as { is_verified?: boolean }).is_verified,
+    is_direct_queried: (f as { is_direct_queried?: boolean }).is_direct_queried,
+    excerpt: (f as { excerpt?: string }).excerpt,
+    evidence_ids: (f as { evidence_ids?: string[] }).evidence_ids,
+    inference_notes: (f as { inference_notes?: string }).inference_notes,
+    evidence: (f as { evidence?: RetrievedEvidenceItem[] }).evidence,
   }));
 
   return (

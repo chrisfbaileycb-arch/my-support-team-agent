@@ -348,6 +348,80 @@ function runMigrations(db: DatabaseSync): void {
         CREATE INDEX IF NOT EXISTS idx_source_retrieval_agent ON source_retrievals(agent_id, retrieved_at DESC);
       `,
     },
+    {
+      name: '004_evidence_layer',
+      sql: `
+        -- Normalized Retrieved Evidence
+        CREATE TABLE IF NOT EXISTS retrieved_evidence (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          run_id TEXT,
+          agent_id TEXT NOT NULL,
+          provider_id TEXT NOT NULL,
+          query TEXT,
+          source_name TEXT NOT NULL,
+          source_url TEXT NOT NULL,
+          canonical_url TEXT,
+          title TEXT NOT NULL,
+          excerpt TEXT,
+          retrieved_at TEXT NOT NULL,
+          published_at TEXT,
+          author TEXT,
+          provider_result_id TEXT,
+          evidence_type TEXT NOT NULL DEFAULT 'LIVE_SOURCE',
+          retrieval_status TEXT NOT NULL DEFAULT 'SUCCESS',
+          content_hash TEXT NOT NULL,
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          quality_score REAL NOT NULL DEFAULT 1.0,
+          is_verified INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_retrieved_ev_user ON retrieved_evidence(user_id);
+        CREATE INDEX IF NOT EXISTS idx_retrieved_ev_run ON retrieved_evidence(run_id);
+        CREATE INDEX IF NOT EXISTS idx_retrieved_ev_agent ON retrieved_evidence(agent_id);
+        CREATE INDEX IF NOT EXISTS idx_retrieved_ev_hash ON retrieved_evidence(content_hash);
+        CREATE INDEX IF NOT EXISTS idx_retrieved_ev_provider ON retrieved_evidence(provider_id);
+
+        -- Finding to Evidence Linking
+        CREATE TABLE IF NOT EXISTS finding_evidence (
+          id TEXT PRIMARY KEY,
+          finding_id TEXT NOT NULL,
+          evidence_id TEXT NOT NULL REFERENCES retrieved_evidence(id) ON DELETE CASCADE,
+          relationship_type TEXT NOT NULL DEFAULT 'PRIMARY',
+          support_strength REAL NOT NULL DEFAULT 1.0,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_fe_finding ON finding_evidence(finding_id);
+        CREATE INDEX IF NOT EXISTS idx_fe_evidence ON finding_evidence(evidence_id);
+
+        -- Durable Evidence Caching
+        CREATE TABLE IF NOT EXISTS evidence_cache (
+          cache_key TEXT PRIMARY KEY,
+          provider_id TEXT NOT NULL,
+          query TEXT NOT NULL,
+          filters_json TEXT NOT NULL DEFAULT '{}',
+          evidence_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_ev_cache_expires ON evidence_cache(expires_at);
+
+        -- Provider Health & Metrics Ledger
+        CREATE TABLE IF NOT EXISTS provider_health (
+          provider_id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'NOT_CONFIGURED',
+          last_call_at TEXT,
+          last_success_at TEXT,
+          last_latency_ms INTEGER NOT NULL DEFAULT 0,
+          last_error TEXT,
+          request_count INTEGER NOT NULL DEFAULT 0,
+          failure_count INTEGER NOT NULL DEFAULT 0,
+          rate_limit_resets_at TEXT,
+          updated_at TEXT NOT NULL
+        );
+      `,
+    },
   ];
 
   for (const migration of migrations) {
@@ -376,6 +450,9 @@ function runMigrations(db: DatabaseSync): void {
 
   ensureColumn(db, 'run_findings', 'evidence_type', 'TEXT');
   ensureColumn(db, 'run_findings', 'response_id', 'TEXT');
+  ensureColumn(db, 'run_findings', 'is_verified', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn(db, 'run_findings', 'evidence_ids', "TEXT NOT NULL DEFAULT '[]'");
+  ensureColumn(db, 'run_findings', 'inference_notes', 'TEXT');
 }
 
 function ensureColumn(db: DatabaseSync, table: string, column: string, typeDef: string): void {

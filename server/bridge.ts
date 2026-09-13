@@ -234,13 +234,23 @@ export function logProxyEvent(log: {
   }
 }
 
-export function getRecentProxyLogs(limit = 50): ProxyLogRecord[] {
+export function getRecentProxyLogs(limit = 50, userId?: string): ProxyLogRecord[] {
   const db = getDatabase();
-  const rows = db.prepare(`
-    SELECT * FROM proxy_logs
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(limit) as Record<string, unknown>[];
+  let rows: Record<string, unknown>[] = [];
+  if (userId) {
+    rows = db.prepare(`
+      SELECT * FROM proxy_logs
+      WHERE user_id = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(userId, limit) as Record<string, unknown>[];
+  } else {
+    rows = db.prepare(`
+      SELECT * FROM proxy_logs
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(limit) as Record<string, unknown>[];
+  }
 
   return rows.map((r) => ({
     id: String(r.id),

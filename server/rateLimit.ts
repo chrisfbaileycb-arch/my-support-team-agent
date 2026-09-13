@@ -19,7 +19,7 @@ export class SqliteRateLimiter implements IRateLimiter {
     const newResetTime = now + windowMs;
 
     // Use a transaction for atomic read-modify-write
-    let row = db.prepare('SELECT count, reset_at FROM rate_limit_buckets WHERE key = ?').get(key) as
+    const row = db.prepare('SELECT count, reset_at FROM rate_limit_buckets WHERE key = ?').get(key) as
       | { count: number; reset_at: number }
       | undefined;
 
@@ -73,6 +73,18 @@ export class SqliteRateLimiter implements IRateLimiter {
 }
 
 export const rateLimiter: IRateLimiter = new SqliteRateLimiter();
+
+export function createRateLimiter(options: {
+  windowSeconds: number;
+  maxRequests: number;
+  keyPrefix: string;
+}) {
+  return rateLimitMiddleware({
+    prefix: options.keyPrefix,
+    limit: options.maxRequests,
+    windowMs: options.windowSeconds * 1000,
+  });
+}
 
 export function rateLimitMiddleware(options: {
   prefix: string;

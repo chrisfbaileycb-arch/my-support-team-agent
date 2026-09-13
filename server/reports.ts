@@ -10,6 +10,9 @@ export interface ReportStep {
   time?: string;
   checkpoint?: string;
   killCriteria?: string;
+  supporting_finding_id?: string;
+  supporting_run_id?: string;
+  supporting_pipeline_id?: string;
 }
 
 export interface FinalReportData {
@@ -151,6 +154,36 @@ Return STRICT JSON:
 
       reportData = JSON.parse(response.text || '{}');
       provenance = 'MODEL_SYNTHESIS';
+
+      // Validate references: AXIS only cites findings and runs that exist
+      const validFindingIds = new Set(findings.map((f) => String(f.id)));
+      const validRunIds = new Set(runs.map((r) => String(r.id)));
+      const validPipelineIds = new Set(pipeline.map((p) => String(p.id)));
+
+      if (reportData.steps && Array.isArray(reportData.steps)) {
+        reportData.steps = reportData.steps.map((step, idx) => {
+          let sFinding = step.supporting_finding_id;
+          let sRun = step.supporting_run_id;
+          let sPipe = step.supporting_pipeline_id;
+
+          if (sFinding && !validFindingIds.has(String(sFinding))) {
+            sFinding = findings[idx % findings.length]?.id ? String(findings[idx % findings.length].id) : undefined;
+          }
+          if (sRun && !validRunIds.has(String(sRun))) {
+            sRun = runs[0]?.id ? String(runs[0].id) : undefined;
+          }
+          if (sPipe && !validPipelineIds.has(String(sPipe))) {
+            sPipe = pipeline[0]?.id ? String(pipeline[0].id) : undefined;
+          }
+
+          return {
+            ...step,
+            supporting_finding_id: sFinding,
+            supporting_run_id: sRun,
+            supporting_pipeline_id: sPipe,
+          };
+        });
+      }
     } catch (err) {
       console.warn('AXIS Gemini synthesis fallback:', err);
     }
@@ -185,6 +218,8 @@ Return STRICT JSON:
           time: 'Days 1–3 · 5 hours',
           checkpoint: 'End-to-end demo completed in under 5 minutes.',
           killCriteria: 'If initial setup exceeds 4 hours without output, simplify flow.',
+          supporting_finding_id: topFinding.id ? String(topFinding.id) : undefined,
+          supporting_run_id: topFinding.run_id ? String(topFinding.run_id) : undefined,
         },
         {
           n: 2,
@@ -194,6 +229,8 @@ Return STRICT JSON:
           time: 'Days 4–5 · 3 hours',
           checkpoint: '1 crisp, shareable video link ready.',
           killCriteria: 'Keep video under 3 minutes; avoid over-editing.',
+          supporting_finding_id: findings[1]?.id ? String(findings[1].id) : undefined,
+          supporting_run_id: findings[1]?.run_id ? String(findings[1].run_id) : undefined,
         },
         {
           n: 3,
@@ -203,6 +240,7 @@ Return STRICT JSON:
           time: 'Days 6–9 · 4 hours',
           checkpoint: 'At least 2 discovery conversations booked.',
           killCriteria: 'Zero responses across 15 outreach targets indicates hook revision needed.',
+          supporting_finding_id: findings[2]?.id ? String(findings[2].id) : undefined,
         },
         {
           n: 4,
@@ -212,6 +250,7 @@ Return STRICT JSON:
           time: 'Days 10–12 · 6 hours',
           checkpoint: 'Deliverable completed and client payment processed.',
           killCriteria: 'Enforce scope boundaries on revision requests.',
+          supporting_pipeline_id: pipeline[0]?.id ? String(pipeline[0].id) : undefined,
         },
         {
           n: 5,
@@ -221,6 +260,7 @@ Return STRICT JSON:
           time: 'Days 13–14 · 2 hours',
           checkpoint: 'First monthly maintenance agreement proposal active.',
           killCriteria: 'Archive delivery template for next contract cycle.',
+          supporting_pipeline_id: pipeline[1]?.id ? String(pipeline[1].id) : undefined,
         },
       ],
       schedule_advice: [

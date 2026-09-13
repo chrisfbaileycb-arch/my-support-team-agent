@@ -13,6 +13,30 @@ export type AgentId =
   | 'skill-compounder'
   | 'chief-of-staff';
 
+export type ProvenanceState =
+  | 'LIVE_SOURCE'
+  | 'CACHED_SOURCE'
+  | 'MODEL_INFERENCE'
+  | 'USER_SUPPLIED'
+  | 'SIMULATED_DEMO';
+
+export interface RetrievedEvidenceItem {
+  id: string;
+  provider_id?: string;
+  source_name: string;
+  source_url: string;
+  title?: string;
+  excerpt?: string;
+  evidence_type: string;
+  retrieved_at: string;
+  published_at?: string;
+  quality_score?: number;
+  content_hash?: string;
+  http_status?: number;
+  response_size_bytes?: number;
+  relationship_type?: string;
+}
+
 export interface Opportunity {
   id: string;
   rank: number;
@@ -28,6 +52,15 @@ export interface Opportunity {
   timeToValue: string;
   tags: string[];
   playbook: string[];
+  // Provenance & Source Evidence Layer
+  provenance?: ProvenanceState;
+  is_verified?: boolean;
+  is_direct_queried?: boolean;
+  excerpt?: string;
+  retrieved_at?: string;
+  evidence_ids?: string[];
+  inference_notes?: string;
+  evidence?: RetrievedEvidenceItem[];
 }
 
 export interface Agent {

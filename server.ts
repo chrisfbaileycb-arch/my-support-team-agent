@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { getDatabase, closeDatabase } from './server/db';
 import { startScheduler, stopScheduler } from './server/scheduler';
 import { router as apiRouter } from './server/routes';
+import { createRateLimiter } from './server/rateLimit';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -14,7 +15,7 @@ getDatabase();
 
 // 1. Security Headers & Request Correlation ID
 app.use((req: Request, res: Response, next: NextFunction) => {
-  const reqId = crypto.randomUUID();
+  const reqId = (req.headers['x-request-id'] as string) || `req_${crypto.randomBytes(8).toString('hex')}`;
   req.requestId = reqId;
   res.setHeader('X-Request-Id', reqId);
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -23,11 +24,44 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// 2. CORS Handling
+// 2. CORS Restriction (Requirement 23)
+const rawAllowedOrigins = process.env.ALLOWED_ORIGINS || '';
+const explicitAllowedOrigins = rawAllowedOrigins
+  ? rawAllowedOrigins.split(',').map((s) => s.trim().toLowerCase())
+  : [];
+
+function isOriginAllowed(origin: string): boolean {
+  if (!origin) return true; // Same-origin or non-browser client
+  const lowerOrigin = origin.toLowerCase();
+
+  // If user configured explicit allowed origins
+  if (explicitAllowedOrigins.length > 0) {
+    return explicitAllowedOrigins.includes(lowerOrigin);
+  }
+
+  // Preview / Development / Standard Cloud Run origins
+  try {
+    const url = new URL(lowerOrigin);
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return true;
+    if (url.hostname.endsWith('.run.app')) return true;
+    if (url.hostname.endsWith('.aistudio.google.com') || url.hostname.endsWith('.google.com')) return true;
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
 app.use((req: Request, res: Response, next: NextFunction) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id');
+  const origin = req.headers.origin;
+
+  if (origin && isOriginAllowed(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id');
+  }
+
   if (req.method === 'OPTIONS') {
     res.sendStatus(204);
     return;
@@ -38,33 +72,25 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // 3. Body Parsing
 app.use(express.json({ limit: '5mb' }));
 
-// 4. Rate Limiting Middleware for API
-const apiRateLimitMap = new Map<string, number[]>();
-app.use('/api', (req: Request, res: Response, next: NextFunction) => {
-  const ip = req.ip || req.socket.remoteAddress || 'unknown';
-  const now = Date.now();
-  const oneMinuteAgo = now - 60000;
-  let history = apiRateLimitMap.get(ip) || [];
-  history = history.filter((t) => t > oneMinuteAgo);
-  if (history.length > 200) {
-    res.status(429).json({ error: 'Too many requests. Please slow down.', code: 'RATE_LIMIT_EXCEEDED' });
-    return;
-  }
-  history.push(now);
-  apiRateLimitMap.set(ip, history);
-  next();
+// 4. Persistent SQLite Rate Limiting for Global API
+const globalLimiter = createRateLimiter({
+  windowSeconds: 60,
+  maxRequests: 200,
+  keyPrefix: 'global_api',
 });
+app.use('/api', globalLimiter);
 
 // 5. Mount API Routes
 app.use('/api', apiRouter);
 
-// 6. Global Error Handling
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  const message = err instanceof Error ? err.message : 'Internal Server Error';
-  console.error('Unhandled server error:', err);
+// 6. Global Error Handling (Requirement 25: Safe error envelope, no stack traces)
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  const message = err instanceof Error ? err.message : 'An unexpected internal error occurred';
+  console.error(`[Unhandled Server Error] [${req.requestId}]:`, err);
   res.status(500).json({
     error: message,
     code: 'INTERNAL_SERVER_ERROR',
+    requestId: req.requestId,
   });
 });
 
