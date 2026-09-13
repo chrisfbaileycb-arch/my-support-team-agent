@@ -320,6 +320,34 @@ function runMigrations(db: DatabaseSync): void {
         VALUES ('ws_default', 'default', '{"autoSyncCalendar":false,"dailyBriefingEmail":false,"exportFormat":"markdown","keepTag":"#MaximizeYourFuture","tasksList":"Maximize Your Future","driveFolder":"Maximize Your Future / Playbooks","connected":false,"status":"NOT_CONFIGURED"}', datetime('now'));
       `,
     },
+    {
+      name: '003_production_hardening',
+      sql: `
+        -- Persistent Rate Limit Buckets
+        CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+          key TEXT PRIMARY KEY,
+          count INTEGER NOT NULL DEFAULT 0,
+          reset_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_rate_limit_reset ON rate_limit_buckets(reset_at);
+
+        -- Source Retrievals (Traceable evidence for live connectors)
+        CREATE TABLE IF NOT EXISTS source_retrievals (
+          id TEXT PRIMARY KEY,
+          agent_id TEXT NOT NULL,
+          provider TEXT NOT NULL,
+          query TEXT NOT NULL,
+          url TEXT,
+          excerpt TEXT,
+          evidence_type TEXT NOT NULL,
+          response_id TEXT,
+          confidence REAL NOT NULL,
+          retrieved_at TEXT NOT NULL,
+          raw_payload TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_source_retrieval_agent ON source_retrievals(agent_id, retrieved_at DESC);
+      `,
+    },
   ];
 
   for (const migration of migrations) {
@@ -328,5 +356,36 @@ function runMigrations(db: DatabaseSync): void {
       const stmt = db.prepare('INSERT INTO _migrations (name, applied_at) VALUES (?, ?)');
       stmt.run(migration.name, new Date().toISOString());
     }
+  }
+
+  // Ensure columns exist on tables that may have been created in 001
+  ensureColumn(db, 'sessions', 'token_hash', 'TEXT');
+  ensureColumn(db, 'sessions', 'issued_at', 'TEXT');
+  ensureColumn(db, 'sessions', 'last_used_at', 'TEXT');
+  ensureColumn(db, 'sessions', 'revoked_at', 'TEXT');
+  ensureColumn(db, 'sessions', 'device_label', 'TEXT');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_sessions_token_hash ON sessions(token_hash);');
+
+  ensureColumn(db, 'schedules', 'claimed_at', 'TEXT');
+  ensureColumn(db, 'schedules', 'claimed_by', 'TEXT');
+  ensureColumn(db, 'schedules', 'lease_expires_at', 'TEXT');
+  ensureColumn(db, 'schedules', 'retry_count', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn(db, 'schedules', 'execution_state', "TEXT NOT NULL DEFAULT 'IDLE'");
+
+  ensureColumn(db, 'agent_runs', 'execution_mode', "TEXT NOT NULL DEFAULT 'MODEL_ONLY'");
+
+  ensureColumn(db, 'run_findings', 'evidence_type', 'TEXT');
+  ensureColumn(db, 'run_findings', 'response_id', 'TEXT');
+}
+
+function ensureColumn(db: DatabaseSync, table: string, column: string, typeDef: string): void {
+  try {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    const exists = cols.some((c) => c.name === column);
+    if (!exists) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${typeDef}`);
+    }
+  } catch (err) {
+    console.warn(`Failed to verify or add column ${column} on ${table}:`, err);
   }
 }
