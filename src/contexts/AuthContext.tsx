@@ -1,6 +1,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import {
+  auth,
+  db,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  firebaseSignOut,
+  doc,
+  setDoc,
+} from '@/lib/firebase';
 
 export interface Profile {
   id: string;
@@ -77,6 +86,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = useCallback(
     async ({ email, password, name, phone }: { email: string; password: string; name?: string; phone?: string }) => {
       const acceptedAt = new Date().toISOString();
+      
+      // Attempt Firebase auth signup
+      try {
+        const fbCred = await createUserWithEmailAndPassword(auth, email, password);
+        if (fbCred.user) {
+          // Sync user profile to Firestore
+          await setDoc(doc(db, 'profiles', fbCred.user.uid), {
+            id: fbCred.user.uid,
+            email,
+            display_name: name || null,
+            phone: phone || null,
+            covenant_accepted_at: acceptedAt,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      } catch (fbErr) {
+        console.info('Firebase auth pass:', (fbErr as Error).message);
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -99,6 +128,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = useCallback(
     async (email: string, password: string) => {
+      // Sign into Firebase Auth if possible
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (fbErr) {
+        console.info('Firebase signin info:', (fbErr as Error).message);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw new Error(error.message);
       await loadProfile(data.user ?? null);
@@ -107,6 +143,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 
   const signOut = useCallback(async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch {
+      /* ignore */
+    }
     await supabase.auth.signOut();
     setProfile(null);
     setSession(null);

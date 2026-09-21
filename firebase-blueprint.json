@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "profiles": {
+      "title": "User Profiles",
+      "description": "User account profiles and covenant acceptance state",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "display_name": { "type": "string" },
+        "phone": { "type": "string" },
+        "covenant_accepted_at": { "type": "string" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "pipeline_items": {
+      "title": "Pipeline Opportunities",
+      "description": "User saved and actively tracked opportunities across 5 stages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "agent_id": { "type": "string" },
+        "source_run_id": { "type": "string" },
+        "source_finding_id": { "type": "string" },
+        "title": { "type": "string" },
+        "source": { "type": "string" },
+        "source_url": { "type": "string" },
+        "summary": { "type": "string" },
+        "difficulty": { "type": "number" },
+        "score": { "type": "number" },
+        "payout": { "type": "string" },
+        "time_to_value": { "type": "string" },
+        "tags": { "type": "array" },
+        "playbook": { "type": "array" },
+        "status": { "type": "string" },
+        "provenance": { "type": "string" },
+        "notes": { "type": "string" },
+        "status_history": { "type": "array" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["id", "user_id", "title"]
+    },
+    "schedules": {
+      "title": "Agent Schedules",
+      "description": "User automation cadences for the seven agents",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "agent_id": { "type": "string" },
+        "cadence": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "timezone": { "type": "string" },
+        "focus": { "type": "string" },
+        "next_run_at": { "type": "string" },
+        "last_run_at": { "type": "string" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["id", "user_id", "agent_id"]
+    },
+    "agent_runs": {
+      "title": "Agent Runs",
+      "description": "Execution runs and sweeps performed by agents",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "agent_id": { "type": "string" },
+        "run_number": { "type": "number" },
+        "trigger": { "type": "string" },
+        "focus": { "type": "string" },
+        "status": { "type": "string" },
+        "execution_mode": { "type": "string" },
+        "is_live": { "type": "boolean" },
+        "is_fallback": { "type": "boolean" },
+        "duration_ms": { "type": "number" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "agent_id"]
+    },
+    "run_findings": {
+      "title": "Run Findings",
+      "description": "Individual opportunities and findings identified in an agent run",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "agent_id": { "type": "string" },
+        "rank": { "type": "number" },
+        "title": { "type": "string" },
+        "source": { "type": "string" },
+        "source_url": { "type": "string" },
+        "summary": { "type": "string" },
+        "difficulty": { "type": "number" },
+        "score": { "type": "number" },
+        "payout": { "type": "string" },
+        "time_to_value": { "type": "string" },
+        "tags": { "type": "array" },
+        "playbook": { "type": "array" },
+        "is_direct_queried": { "type": "boolean" },
+        "is_verified": { "type": "boolean" },
+        "provenance": { "type": "string" },
+        "evidence_ids": { "type": "array" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "run_id", "title"]
+    },
+    "retrieved_evidence": {
+      "title": "Retrieved Evidence",
+      "description": "Direct external source evidence retrieved and verified before AI inference",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "agent_id": { "type": "string" },
+        "provider_id": { "type": "string" },
+        "query": { "type": "string" },
+        "source_name": { "type": "string" },
+        "source_url": { "type": "string" },
+        "canonical_url": { "type": "string" },
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "retrieved_at": { "type": "string" },
+        "published_at": { "type": "string" },
+        "author": { "type": "string" },
+        "evidence_type": { "type": "string" },
+        "retrieval_status": { "type": "string" },
+        "content_hash": { "type": "string" },
+        "quality_score": { "type": "number" },
+        "is_verified": { "type": "boolean" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "provider_id", "content_hash"]
+    },
+    "final_reports": {
+      "title": "Final Path Reports",
+      "description": "AXIS-07 Chief of Staff synthesized strategic roadmaps and action plans",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "plan": { "type": "string" },
+        "completed_steps": { "type": "array" },
+        "references": { "type": "array" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["id", "user_id", "title"]
+    },
+    "subscribers": {
+      "title": "Briefing Subscribers",
+      "description": "Opt-in daily morning briefing recipients",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "sms_opt_in": { "type": "boolean" },
+        "source": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "email"]
+    },
+    "bridge_keys": {
+      "title": "Bridge API Keys",
+      "description": "Cryptographically hashed API access keys for Intermediary Bridge",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "name": { "type": "string" },
+        "target_site": { "type": "string" },
+        "permissions": { "type": "array" },
+        "rate_limit": { "type": "number" },
+        "hashed_key": { "type": "string" },
+        "prefix": { "type": "string" },
+        "is_active": { "type": "boolean" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "user_id", "name"]
+    }
+  },
+  "securityRules": "Users may only read and write their own profiles, pipeline items, schedules, reports, bridge keys, and subscribers. Public and demo agent runs and retrieved evidence may be read by any user for verification."
+}

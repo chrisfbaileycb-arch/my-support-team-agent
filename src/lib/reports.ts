@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { db, doc, updateDoc, deleteDoc } from '@/lib/firebase';
 import { AGENT_MAP } from '@/data/agents';
 
 export interface ReportStep {
@@ -65,11 +66,28 @@ export const saveCompletedSteps = async (reportId: string, completed: number[]):
     .update({ completed_steps: completed, updated_at: new Date().toISOString() })
     .eq('id', reportId);
   if (error) throw new Error(error.message);
+
+  // Sync to Firebase Firestore
+  try {
+    await updateDoc(doc(db, 'final_reports', reportId), {
+      completed_steps: completed,
+      updated_at: new Date().toISOString(),
+    });
+  } catch {
+    /* silent fallback */
+  }
 };
 
 export const deleteReport = async (reportId: string): Promise<void> => {
   const { error } = await supabase.from('final_reports').delete().eq('id', reportId);
   if (error) throw new Error(error.message);
+
+  // Sync to Firebase Firestore
+  try {
+    await deleteDoc(doc(db, 'final_reports', reportId));
+  } catch {
+    /* silent fallback */
+  }
 };
 
 /** Render the report as portable markdown for export, clipboard or email. */

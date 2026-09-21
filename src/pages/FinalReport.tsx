@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner';
 import SiteHeader from '@/components/SiteHeader';
 import SiteFooter from '@/components/SiteFooter';
+import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { AGENT_MAP } from '@/data/agents';
 import {
@@ -29,6 +30,7 @@ const FinalReportPage: React.FC = () => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [meta, setMeta] = useState<{ usedRuns: number; savedCount: number } | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const loadHistory = useCallback(async () => {
     if (!user) return;
@@ -118,9 +120,16 @@ const FinalReportPage: React.FC = () => {
           <div className="mt-8 rounded-3xl border border-white bg-white/80 p-8 text-center shadow-sm backdrop-blur">
             <Sparkles className="mx-auto h-6 w-6 text-rose-400" />
             <p className="mx-auto mt-3 max-w-md text-sm text-slate-600">
-              Sign in from the header to generate your final report. AXIS-07 needs your stored agent runs and your saved
-              pipeline, and both live on your account.
+              Sign in to generate your final report. AXIS-07 reads your stored agent runs and your saved
+              pipeline, synchronizing seamlessly with Firebase and your personal account.
             </p>
+            <button
+              type="button"
+              onClick={() => setAuthOpen(true)}
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:from-rose-600 hover:to-indigo-700"
+            >
+              Sign in or Join to compile report
+            </button>
           </div>
         ) : (
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_2fr]">
@@ -390,6 +399,7 @@ const FinalReportPage: React.FC = () => {
           </div>
         )}
       </main>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <SiteFooter onNavigate={() => undefined} />
     </div>
   );

@@ -1,6 +1,20 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { Request, Response, NextFunction } from 'express';
 import { getDatabase } from './db';
+
+// Firebase Project Config
+let cachedFirebaseProjectId = 'gen-lang-client-0359771227';
+try {
+  const cfgPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(cfgPath)) {
+    const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+    if (raw.projectId) cachedFirebaseProjectId = raw.projectId;
+  }
+} catch {
+  // fallback to default
+}
 
 export interface AuthenticatedUser {
   id: string;
@@ -164,6 +178,62 @@ export function getSessionUser(rawToken: string): { user: AuthenticatedUser; ses
   return { user: userRow, session };
 }
 
+// Parse and validate Firebase JWT ID token
+export function parseFirebaseToken(rawToken: string): AuthenticatedUser | null {
+  try {
+    const parts = rawToken.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+
+    // Check if token is issued for this Firebase project
+    const expectedIss = `https://securetoken.google.com/${cachedFirebaseProjectId}`;
+    if (payload.iss !== expectedIss && payload.aud !== cachedFirebaseProjectId) {
+      return null;
+    }
+
+    // Check expiration
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < nowSec) {
+      return null;
+    }
+
+    const uid = String(payload.user_id || payload.sub || '');
+    if (!uid) return null;
+
+    const email = String(payload.email || `${uid}@firebase.user`);
+    const displayName = payload.name ? String(payload.name) : null;
+    const phone = payload.phone_number ? String(payload.phone_number) : null;
+
+    // Ensure user exists in SQLite DB for relational integrity across agent runs & pipeline
+    const db = getDatabase();
+    const nowIso = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO users (id, email, password_hash, password_salt, role, display_name, phone, created_at, updated_at)
+      VALUES (?, ?, 'FIREBASE_AUTH_MANAGED', 'N/A', 'member', ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        email = COALESCE(excluded.email, users.email),
+        display_name = COALESCE(excluded.display_name, users.display_name),
+        phone = COALESCE(excluded.phone, users.phone),
+        updated_at = excluded.updated_at
+    `).run(uid, email, displayName, phone, nowIso, nowIso);
+
+    db.prepare(`
+      INSERT OR IGNORE INTO profiles (user_id, email, display_name, phone, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(uid, email, displayName, phone, nowIso, nowIso);
+
+    return {
+      id: uid,
+      email,
+      display_name: displayName,
+      phone,
+      role: 'member',
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Optional Auth Middleware
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers['authorization'] || '';
@@ -171,6 +241,24 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 
   if (token) {
     const authData = getSessionUser(token);
+    if (!authData && token.includes('.')) {
+      const fbUser = parseFirebaseToken(token);
+      if (fbUser) {
+        req.user = fbUser;
+        req.session = {
+          id: 'fb_' + fbUser.id,
+          user_id: fbUser.id,
+          expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
+          issued_at: new Date().toISOString(),
+          last_used_at: new Date().toISOString(),
+          revoked_at: null,
+          device_label: 'Firebase Auth Client',
+        };
+        next();
+        return;
+      }
+    }
+
     if (authData) {
       req.user = authData.user;
       req.session = authData.session;

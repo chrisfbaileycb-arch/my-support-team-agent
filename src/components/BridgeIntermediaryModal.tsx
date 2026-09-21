@@ -15,6 +15,8 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
   const [activeKey, setActiveKey] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
+  const [isTestingProxy, setIsTestingProxy] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -81,6 +83,36 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
       setTimeout(() => setCopiedEndpoint(false), 2000);
     }
     toast.success('Copied to clipboard');
+  };
+
+  const handleTestProxyCall = async () => {
+    setIsTestingProxy(true);
+    setTestResult(null);
+    try {
+      const res = await fetch('/api/proxy/agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${displayKey}`,
+        },
+        body: JSON.stringify({
+          agentId: 'freelance-scout',
+          sourceClient: 'Kitchen&Code Test Intermediary',
+          focus: 'Restaurant Shift Ops & Margin Optimization',
+        }),
+      });
+      const data = await res.json();
+      setTestResult(JSON.stringify(data, null, 2));
+      if (res.ok) {
+        toast.success('Bridge Proxy Agent executed successfully');
+      } else {
+        toast.error(data.error || 'Proxy request returned an error');
+      }
+    } catch {
+      toast.error('Network error executing proxy agent test');
+    } finally {
+      setIsTestingProxy(false);
+    }
   };
 
   const modalContent = (
@@ -186,9 +218,20 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
           )}
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4">
-            <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5 text-amber-500" /> Example cURL Integration Payload
-            </h5>
+            <div className="flex items-center justify-between mb-2">
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-amber-500" /> Example cURL Integration Payload
+              </h5>
+              <button
+                type="button"
+                onClick={handleTestProxyCall}
+                disabled={isTestingProxy}
+                className="inline-flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 text-xs font-semibold shadow-sm transition disabled:opacity-60"
+              >
+                {isTestingProxy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+                {isTestingProxy ? 'Testing...' : 'Test Proxy Execution'}
+              </button>
+            </div>
             <pre className="text-[10px] font-mono text-slate-700 dark:text-slate-300 overflow-x-auto leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
 {`curl -X POST "${proxyEndpoint}" \\
   -H "Authorization: Bearer ${displayKey}" \\
@@ -199,6 +242,14 @@ export const BridgeIntermediaryModal: React.FC<BridgeIntermediaryModalProps> = (
     "focus": "Restaurant Shift Ops & Margin Optimization"
   }'`}
             </pre>
+            {testResult && (
+              <div className="mt-3">
+                <div className="text-[10px] font-bold text-slate-500 mb-1">Live Proxy Response:</div>
+                <pre className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 max-h-40 overflow-y-auto">
+                  {testResult}
+                </pre>
+              </div>
+            )}
           </div>
         </div>
       </div>

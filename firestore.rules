@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Profiles
+    match /profiles/{userId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+
+    // Pipeline Items
+    match /pipeline_items/{itemId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // Schedules
+    match /schedules/{scheduleId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Agent Runs & Findings (Audit & History)
+    match /agent_runs/{runId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    match /run_findings/{findingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Retrieved Evidence
+    match /retrieved_evidence/{evidenceId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Reports
+    match /final_reports/{reportId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // Subscribers
+    match /subscribers/{subscriberId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // Bridge Keys
+    match /bridge_keys/{keyId} {
+      allow read, write: if true;
+    }
+  }
+}
+

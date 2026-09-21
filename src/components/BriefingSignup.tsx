@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { AGENTS } from '@/data/agents';
+import { db, doc, setDoc } from '@/lib/firebase';
 
 const BriefingSignup: React.FC = () => {
   const [name, setName] = useState('');
@@ -20,6 +21,22 @@ const BriefingSignup: React.FC = () => {
     setStatus('loading');
     setMessage('');
     try {
+      // Direct Firestore document persistence
+      try {
+        const subscriberId = email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        await setDoc(doc(db, 'subscribers', subscriberId), {
+          id: subscriberId,
+          email,
+          name: name || null,
+          phone: phone || null,
+          sms_opt_in: smsOptIn === true,
+          source: 'daily-briefing-signup',
+          created_at: new Date().toISOString(),
+        });
+      } catch (fbErr) {
+        console.info('Firestore subscriber write deferred:', fbErr);
+      }
+
       const res = await fetch('/api/briefing/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

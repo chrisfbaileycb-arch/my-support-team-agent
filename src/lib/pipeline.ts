@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { db, doc, setDoc, updateDoc, deleteDoc } from '@/lib/firebase';
 import type { Opportunity, AgentId } from '@/data/agents';
 
 export type PipelineStatus = 'new' | 'researching' | 'executing' | 'won' | 'dropped';
@@ -88,17 +89,48 @@ export const insertSaved = async (
   };
   const { data, error } = await supabase.from('saved_opportunities').insert(payload).select().single();
   if (error) throw new Error(error.message);
+  
+  // Real-time Firestore sync
+  try {
+    const firestoreId = data.id || `pipe_${Date.now()}`;
+    await setDoc(doc(db, 'pipeline_items', firestoreId), {
+      ...payload,
+      id: firestoreId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn('Firestore pipeline sync deferred:', err);
+  }
+
   return data as SavedOpportunity;
 };
 
 export const updateSavedStatus = async (id: string, status: PipelineStatus): Promise<void> => {
   const { error } = await supabase.from('saved_opportunities').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
+
+  // Real-time Firestore sync
+  try {
+    await updateDoc(doc(db, 'pipeline_items', id), {
+      status,
+      updated_at: new Date().toISOString(),
+    });
+  } catch {
+    /* silent fallback */
+  }
 };
 
 export const deleteSaved = async (id: string): Promise<void> => {
   const { error } = await supabase.from('saved_opportunities').delete().eq('id', id);
   if (error) throw new Error(error.message);
+
+  // Real-time Firestore sync
+  try {
+    await deleteDoc(doc(db, 'pipeline_items', id));
+  } catch {
+    /* silent fallback */
+  }
 };
 
 /** Move anything saved on this browser before sign-in onto the member's account. */

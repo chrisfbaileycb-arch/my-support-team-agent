@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { db, doc, setDoc } from '@/lib/firebase';
 import type { AgentId, Opportunity, RetrievedEvidenceItem, ProvenanceState } from '@/data/agents';
 import type { ScheduleId } from '@/data/covenant';
 
@@ -129,6 +130,23 @@ export const upsertSchedule = async (userId: string, agentId: string, cadence: S
       { onConflict: 'user_id,agent_id' }
     );
   if (error) throw new Error(error.message);
+
+  // Sync to Firebase Firestore
+  try {
+    await setDoc(
+      doc(db, 'schedules', `${userId}_${agentId}`),
+      {
+        id: `${userId}_${agentId}`,
+        user_id: userId,
+        agent_id: agentId,
+        cadence,
+        updated_at: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch {
+    /* fallback safe */
+  }
 };
 
 export const upsertManySchedules = async (
@@ -144,4 +162,25 @@ export const upsertManySchedules = async (
   if (!rows.length) return;
   const { error } = await supabase.from('agent_schedules').upsert(rows, { onConflict: 'user_id,agent_id' });
   if (error) throw new Error(error.message);
+
+  // Sync to Firebase Firestore
+  try {
+    await Promise.all(
+      Object.entries(entries).map(([agent_id, cadence]) =>
+        setDoc(
+          doc(db, 'schedules', `${userId}_${agent_id}`),
+          {
+            id: `${userId}_${agent_id}`,
+            user_id: userId,
+            agent_id,
+            cadence,
+            updated_at: new Date().toISOString(),
+          },
+          { merge: true }
+        )
+      )
+    );
+  } catch {
+    /* fallback safe */
+  }
 };
