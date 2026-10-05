@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Report Synthesizer — Maximize Your Future</title>
+  <meta name="description" content="AXIS-07 Chief of Staff single ordered path synthesis: numbered steps, time estimates, checkpoints, and kill criteria.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Shared Responsive Navigation Header -->
+  <header class="site-header"></header>
+
+  <!-- Main Content Container -->
+  <main class="container">
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div class="page-badge">AXIS-07 Synthesis Engine</div>
+        <h1 class="page-title">The Single Ordered Path</h1>
+        <p class="page-desc">
+          Consolidates your active pipeline and agent telemetry into one actionable sequence with clear kill criteria. No menu of options.
+        </p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="btn btn-secondary" id="copy-markdown-btn">📋 Copy Markdown</button>
+        <button type="button" class="btn btn-outline" id="download-markdown-btn">⬇️ Download Report</button>
+      </div>
+    </div>
+
+    <!-- Main Grid: Constraints on Left, The Path on Right -->
+    <div class="grid-3" style="grid-template-columns: 1fr 2fr; align-items: start; gap: 24px;">
+      <!-- Constraints & Synthesis Card -->
+      <div class="card">
+        <h3 class="card-title" style="margin-bottom: 16px;">Your Constraints</h3>
+        <form id="report-constraints-form">
+          <div class="form-group">
+            <label class="form-label" for="report-goal">Target Outcome</label>
+            <input type="text" id="report-goal" class="form-input" value="First reliable $2,500/mo income line" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="report-hours">Available Weekly Hours</label>
+            <select id="report-hours" class="form-select">
+              <option value="5-10 hours/week">5-10 hours/week (Evenings)</option>
+              <option value="10-15 hours/week" selected>10-15 hours/week (Standard sprint)</option>
+              <option value="20-30 hours/week">20-30 hours/week (Intensive)</option>
+              <option value="40+ hours/week">Full-Time Focus</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="report-budget">Capital Budget</label>
+            <select id="report-budget" class="form-select">
+              <option value="$0 (Free Tiers Only)" selected>$0 (Free Tiers &amp; Open Source)</option>
+              <option value="Under $100">Under $100 (Domain + basic tools)</option>
+              <option value="$250 - $500">$250 - $500 (Pro SaaS stack)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="report-level">Skill Level</label>
+            <select id="report-level" class="form-select">
+              <option value="Beginner">Beginner (No-code / Guided)</option>
+              <option value="Intermediate" selected>Intermediate (Familiar with tools)</option>
+              <option value="Advanced">Advanced (Full-stack developer)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="synthesize-btn">
+            🧭 Compile AXIS-07 Path
+          </button>
+        </form>
+
+        <div style="margin-top: 20px; padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-md); font-size: 0.775rem; color: var(--text-secondary);">
+          <strong>Covenant Rule:</strong> All good goes to the one true Source, the Maker of Everything. All harm is cut off.
+        </div>
+      </div>
+
+      <!-- The Ordered Path Card -->
+      <div class="card" id="report-result-card">
+        <div class="card-header">
+          <div>
+            <span class="badge badge-emerald" id="report-status-badge">Compiled &amp; Ready</span>
+            <h3 class="card-title" id="report-headline" style="margin-top: 4px;">Strategic Execution Blueprint</h3>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);" id="report-timestamp">Generated today</div>
+        </div>
+
+        <!-- Next 24 Hours Urgent Sprint -->
+        <div style="background: linear-gradient(135deg, rgba(225,29,72,0.08), rgba(99,102,241,0.08)); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px;">
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--accent-rose); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+            The Next 24 Hours
+          </h4>
+          <p id="report-24h" style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; line-height: 1.5;">
+            Qualify the top discovery in your pipeline. Send three custom audit proposals to targeted high-margin clients before noon.
+          </p>
+        </div>
+
+        <!-- The Numbered Steps List -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px;">Numbered Action Sequence</h4>
+        <div id="steps-container" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+          <!-- Populated by report.js -->
+        </div>
+
+        <!-- Checkpoints & Kill Criteria -->
+        <div style="background: var(--bg-subtle); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-color);">
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--accent-amber); text-transform: uppercase; margin-bottom: 6px;">
+            Checkpoints &amp; Kill Criteria
+          </h4>
+          <p id="report-kill" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+            If zero positive replies are received within 72 hours of delivering 5 qualified proposals, kill this niche vector and pivot immediately to the next candidate in your pipeline.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Shared Responsive Footer -->
+  <footer class="site-footer"></footer>
+
+  <!-- Scripts: Shared Framework & Isolated Page Script -->
+  <script src="./app.js"></script>
+  <script src="./report.js"></script>
+</body>
+</html>

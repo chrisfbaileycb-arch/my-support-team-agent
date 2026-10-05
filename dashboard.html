@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Command Center &amp; Bridge — Maximize Your Future</title>
+  <meta name="description" content="Live agent execution console, Intermediary Bridge API credentials, and real-time retrieval sweeps.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Shared Responsive Navigation Header -->
+  <header class="site-header"></header>
+
+  <!-- Main Content Container -->
+  <main class="container">
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div class="page-badge">Command Center &amp; Proxy Bridge</div>
+        <h1 class="page-title">Agent Dispatcher &amp; Execution Console</h1>
+        <p class="page-desc">
+          Trigger live retrieval runs on demand, monitor real-time outputs, and access the external Intermediary Bridge API.
+        </p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="./pipeline.html" class="btn btn-secondary">Go to Pipeline</a>
+        <a href="./report.html" class="btn btn-outline">Compile Report</a>
+      </div>
+    </div>
+
+    <!-- Main Grid: Trigger Controls & Live Console -->
+    <div class="grid-2" style="align-items: start; margin-bottom: 32px;">
+      <!-- Agent Dispatcher Form Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Launch Agent Sweep</h3>
+          <span class="badge badge-indigo" id="active-agent-badge">Ready</span>
+        </div>
+
+        <form id="run-form">
+          <div class="form-group">
+            <label class="form-label" for="agent-select">Target Specialist Agent</label>
+            <select id="agent-select" class="form-select">
+              <!-- Populated by dashboard.js -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="focus-input">Search / Analysis Focus Query</label>
+            <input 
+              type="text" 
+              id="focus-input" 
+              class="form-input" 
+              placeholder="e.g. Restaurant Shift Ops & Margin Optimization" 
+              value="Restaurant Shift Ops & Margin Optimization"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="mode-select">Execution Mode</label>
+            <select id="mode-select" class="form-select">
+              <option value="LIVE_RETRIEVAL">Live Web &amp; API Retrieval (High Precision)</option>
+              <option value="MODEL_ONLY">Fast Model Synthesis (Direct Gemini Reasoning)</option>
+              <option value="DEEP_BENCHMARK">Deep Benchmark Analysis (Evidence Grounded)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="trigger-btn">
+            <span>⚡ Launch Sweep Now</span>
+          </button>
+        </form>
+
+        <div style="margin-top: 20px; padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-md); font-size: 0.8rem; color: var(--text-secondary);">
+          💡 <strong>Session Handoff:</strong> Findings generated in this run can be directly pushed to your <a href="./pipeline.html" style="color: var(--primary); font-weight: 600;">Opportunity Pipeline</a> with one click.
+        </div>
+      </div>
+
+      <!-- Real-Time Console Card -->
+      <div class="card" style="display: flex; flex-direction: column; min-height: 380px;">
+        <div class="card-header">
+          <h3 class="card-title">Live Execution Console</h3>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="clear-console-btn">Clear</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="copy-console-btn">Copy Output</button>
+          </div>
+        </div>
+
+        <div 
+          id="console-output" 
+          style="flex: 1; background: #0f172a; color: #38bdf8; font-family: var(--font-mono); font-size: 0.775rem; padding: 16px; border-radius: var(--radius-md); overflow-y: auto; max-height: 280px; line-height: 1.6; white-space: pre-wrap;"
+        >Initializing AXIS-07 agent command terminal...
+Session ready. Select an agent on the left and trigger a sweep.</div>
+
+        <div id="save-to-pipeline-bar" style="margin-top: 14px; display: none; align-items: center; justify-content: space-between; background: var(--accent-emerald-light); padding: 10px 14px; border-radius: var(--radius-md);">
+          <span style="font-size: 0.825rem; font-weight: 600; color: var(--accent-emerald);">Run generated candidate findings!</span>
+          <button type="button" class="btn btn-primary btn-sm" id="push-to-pipeline-btn">📥 Push Findings to Pipeline</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intermediary Bridge API Section -->
+    <div class="card" style="margin-bottom: 32px;">
+      <div class="card-header">
+        <div>
+          <span class="badge badge-amber" style="margin-bottom: 4px;">External Intermediary Bridge</span>
+          <h3 class="card-title">Client Proxy &amp; cURL Integration</h3>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" id="generate-key-btn">Generate New API Key</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+        Allows your external applications, automated microservices, or client portals to dispatch agent sweeps programmatically via standard JSON HTTP POST requests.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Active Bearer Token</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="bearer-key-input" class="form-input" readonly value="myf_live_sec_89f02c9a117b884d" style="font-family: var(--font-mono); font-size: 0.8rem; background: var(--bg-subtle);" />
+          <button type="button" class="btn btn-secondary btn-sm" id="copy-bearer-btn">Copy Key</button>
+        </div>
+      </div>
+
+      <div style="background: var(--bg-subtle); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <strong style="font-size: 0.8rem; color: var(--text-primary);">Example cURL Command:</strong>
+          <button type="button" class="btn btn-primary btn-sm" id="test-proxy-btn">⚡ Test Proxy Call</button>
+        </div>
+        <pre id="curl-preview" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); overflow-x: auto; padding: 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">curl -X POST "/api/proxy/agent" \
+  -H "Authorization: Bearer myf_live_sec_89f02c9a117b884d" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId": "freelance-scout",
+    "sourceClient": "Multi-Page Intermediary",
+    "focus": "Restaurant Shift Ops & Margin Optimization"
+  }'</pre>
+        <div id="proxy-response" style="margin-top: 12px; display: none; background: #0f172a; color: #4ade80; font-family: var(--font-mono); font-size: 0.75rem; padding: 12px; border-radius: var(--radius-sm); max-height: 180px; overflow-y: auto; white-space: pre-wrap;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Shared Responsive Footer -->
+  <footer class="site-footer"></footer>
+
+  <!-- Scripts: Shared Framework & Isolated Page Script -->
+  <script src="./app.js"></script>
+  <script src="./dashboard.js"></script>
+</body>
+</html>

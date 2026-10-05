@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opportunity Pipeline — Maximize Your Future</title>
+  <meta name="description" content="Five-stage opportunity pipeline tracking discovered client gigs, zero-ship commerce assets, and high-margin plays.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Shared Responsive Navigation Header -->
+  <header class="site-header"></header>
+
+  <!-- Main Content Container -->
+  <main class="container">
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div class="page-badge">5-Stage Kanban Board</div>
+        <h1 class="page-title">Opportunity Pipeline</h1>
+        <p class="page-desc">
+          Track, evaluate, and execute opportunities uncovered by your specialist agents across 5 distinct lifecycle stages.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" id="open-add-opp-btn">+ Add Custom Opportunity</button>
+        <a href="./report.html" class="btn btn-outline">Synthesize Final Path</a>
+      </div>
+    </div>
+
+    <!-- Filter and Controls Bar -->
+    <div class="card" style="padding: 14px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <label for="filter-agent-select" style="font-size: 0.825rem; font-weight: 600; color: var(--text-secondary);">Filter by Agent:</label>
+        <select id="filter-agent-select" class="form-select" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
+          <option value="ALL">All 7 Specialist Agents</option>
+          <!-- Populated by pipeline.js -->
+        </select>
+      </div>
+      <div style="font-size: 0.825rem; color: var(--text-muted);" id="pipeline-status-indicator">
+        Persisted locally &amp; Firebase ready
+      </div>
+    </div>
+
+    <!-- Kanban Board Container -->
+    <div class="kanban-board" id="kanban-board">
+      <!-- 5 Columns populated dynamically by pipeline.js -->
+    </div>
+  </main>
+
+  <!-- Add Opportunity Modal -->
+  <div id="add-opp-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="card-title">Add Opportunity to Pipeline</h3>
+        <button type="button" id="close-opp-modal" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">✕</button>
+      </div>
+      <form id="add-opp-form">
+        <div class="form-group">
+          <label class="form-label" for="new-opp-title">Opportunity Title</label>
+          <input type="text" id="new-opp-title" class="form-input" placeholder="e.g. Dental Practice AI Booking System" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-opp-agent">Attributed Agent</label>
+          <select id="new-opp-agent" class="form-select"></select>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="new-opp-payout">Est. Payout / Value</label>
+            <input type="text" id="new-opp-payout" class="form-input" placeholder="e.g. $1,500 retainer" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-opp-source">Source</label>
+            <input type="text" id="new-opp-source" class="form-input" placeholder="e.g. Cold Outreach" required />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save to Pipeline</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shared Responsive Footer -->
+  <footer class="site-footer"></footer>
+
+  <!-- Scripts: Shared Framework & Isolated Page Script -->
+  <script src="./app.js"></script>
+  <script src="./pipeline.js"></script>
+</body>
+</html>

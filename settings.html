@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings &amp; Sync — Maximize Your Future</title>
+  <meta name="description" content="Member profile, Covenant status, Firebase Firestore persistence, and agent automation cadences.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Shared Responsive Navigation Header -->
+  <header class="site-header"></header>
+
+  <!-- Main Content Container -->
+  <main class="container">
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div class="page-badge">Member Configuration</div>
+        <h1 class="page-title">Settings &amp; Cloud Synchronization</h1>
+        <p class="page-desc">
+          Manage your operator identity, Covenant state, Firebase Firestore sync, and agent automation cadences.
+        </p>
+      </div>
+      <div>
+        <button type="button" class="btn btn-secondary" id="export-json-btn">📦 Export All Data (JSON)</button>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid-2" style="align-items: start; margin-bottom: 32px;">
+      <!-- Profile & Account Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Operator Profile</h3>
+          <span class="badge badge-emerald" id="auth-status-badge">Guest Session</span>
+        </div>
+
+        <div id="profile-details" style="margin-bottom: 20px;">
+          <!-- Populated by settings.js -->
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-primary" id="manage-account-btn">Switch Account / Sign In</button>
+          <button type="button" class="btn btn-outline" id="sign-out-btn" style="display: none;">Sign Out</button>
+        </div>
+      </div>
+
+      <!-- Cloud Persistence & Firebase Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Cloud Database &amp; Firebase</h3>
+          <span class="badge badge-indigo">Firestore Connected</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+          Your pipeline discoveries, agent run telemetry, and schedules synchronize with Firestore when online, with transparent offline localStorage backup.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--bg-subtle); border-radius: var(--radius-sm); font-size: 0.825rem;">
+            <span style="color: var(--text-muted);">Database Target:</span>
+            <strong>Google Cloud Firestore</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--bg-subtle); border-radius: var(--radius-sm); font-size: 0.825rem;">
+            <span style="color: var(--text-muted);">Security Rules:</span>
+            <strong style="color: var(--accent-emerald);">Active &amp; Deployed</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--bg-subtle); border-radius: var(--radius-sm); font-size: 0.825rem;">
+            <span style="color: var(--text-muted);">Local Storage Cache:</span>
+            <strong id="storage-cache-count">Active</strong>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="test-firestore-btn">⚡ Test Firestore Sync</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="clear-cache-btn" style="color: var(--accent-rose);">Clear Local Cache</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent Automation Cadences Table Card -->
+    <div class="card" style="margin-bottom: 32px;">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Agent Automation Cadences</h3>
+          <p style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 2px;">
+            Set how frequently each specialist agent independently sweeps their respective domains.
+          </p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="save-cadences-btn">Save All Cadences</button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.775rem; text-transform: uppercase;">
+              <th style="padding: 12px 8px;">Agent Code</th>
+              <th style="padding: 12px 8px;">Specialist Name</th>
+              <th style="padding: 12px 8px;">Specialization Focus</th>
+              <th style="padding: 12px 8px;">Schedule Cadence</th>
+            </tr>
+          </thead>
+          <tbody id="cadence-table-body">
+            <!-- Populated by settings.js -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Shared Responsive Footer -->
+  <footer class="site-footer"></footer>
+
+  <!-- Scripts: Shared Framework & Isolated Page Script -->
+  <script src="./app.js"></script>
+  <script src="./settings.js"></script>
+</body>
+</html>

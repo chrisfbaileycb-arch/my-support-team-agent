@@ -114,17 +114,24 @@ process.on('SIGINT', () => {
 
 // 8. Vite Dev Middleware / Production Static Serving
 async function startServer() {
+  // Allow direct static access to CSS, JS, and HTML files
+  app.use(express.static(process.cwd()));
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'spa',
+      appType: 'mpa',
     });
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.use((_req: Request, res: Response) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.get('*', (req: Request, res: Response) => {
+      const requested = req.path.replace(/^\//, '');
+      const filePath = path.join(distPath, requested || 'index.html');
+      res.sendFile(filePath, (err) => {
+        if (err) res.sendFile(path.join(distPath, 'index.html'));
+      });
     });
   }
 

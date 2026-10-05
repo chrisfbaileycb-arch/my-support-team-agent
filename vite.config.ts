@@ -16,4 +16,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        dashboard: path.resolve(__dirname, "dashboard.html"),
+        pipeline: path.resolve(__dirname, "pipeline.html"),
+        report: path.resolve(__dirname, "report.html"),
+        settings: path.resolve(__dirname, "settings.html"),
+      },
+    },
+  },
 }));

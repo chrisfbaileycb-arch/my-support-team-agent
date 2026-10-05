@@ -1,25 +1,86 @@
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Maximize Your Future — Seven Agents Working For You</title>
-    <meta name="description" content="A kind, light AI agent platform: seven specialist agents sweep freelance work, zero-ship commerce, weak signals, benchmarks, free growth channels, compounded agent skills, and one final path. Kindness to people and to agents is the entry requirement." />
-    <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maximize Your Future — Seven AI Specialist Agents</title>
+  <meta name="description" content="Seven AI specialist agents sweeping freelancing, zero-ship commerce, weak signals, benchmarks, growth channels, and compound agent skills.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Shared Responsive Navigation Header -->
+  <header class="site-header"></header>
 
-    <meta property="og:title" content="Maximize Your Future — Seven Agents Working For You" />
-    <meta property="og:description" content="Seven AI agents that work relentlessly for you. Kindness to people, kindness to agents, and respect for one another is the requirement for access." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://d64gsuwffb70l.cloudfront.net/6a8bce37b1a9555656dee3ce_1787548459378_b100490d.jpg" />
+  <!-- Main Content Container -->
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="page-header" style="text-align: center; max-width: 800px; margin: 20px auto 40px auto;">
+      <div class="page-badge">Multi-Page Architecture · Pure Static Ready</div>
+      <h1 class="page-title" style="font-size: 2.5rem;">Seven AI Agents Working Relentlessly For You</h1>
+      <p class="page-desc" style="margin: 0 auto;">
+        Operating on distinct cadences across client freelancing, zero-ship digital commerce, early demand signals, growth channels, and synthesis. All grounded in kindness and mutual respect.
+      </p>
+      <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="./dashboard.html" class="btn btn-primary">Open Live Command Center</a>
+        <a href="./pipeline.html" class="btn btn-secondary">View Opportunity Pipeline</a>
+        <a href="./report.html" class="btn btn-outline">Generate Final Report</a>
+      </div>
+    </section>
 
+    <!-- The 7 Specialist Agents Deck (Centered: 1 Chief of Staff + 6 Field Agents) -->
+    <section style="margin-bottom: 48px;">
+      <div style="text-align: center; max-width: 650px; margin: 0 auto 28px auto;">
+        <span class="badge badge-indigo" style="margin-bottom: 8px;">Specialist Autonomous Workforce</span>
+        <h2 style="font-size: 1.75rem; letter-spacing: -0.02em; margin-bottom: 8px;">The Specialist Deck</h2>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0 auto;">Select any agent to inspect, adjust cadence, or launch a manual retrieval sweep.</p>
+      </div>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="/og.jpg" />
-  </head>
+      <!-- Chief of Staff Lead Banner Card -->
+      <div class="deck-lead-wrapper" id="chief-of-staff-deck-lead">
+        <!-- Rendered dynamically by index.js -->
+      </div>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+      <!-- Followed by the 6 Specialist Agents in a clean 3x2 grid -->
+      <div class="deck-grid" id="agents-deck">
+        <!-- Rendered dynamically by index.js -->
+      </div>
+    </section>
+
+    <!-- Daily Briefing Signup Section -->
+    <section class="card" style="background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(225,29,72,0.05)); border: 1px solid var(--border-color); margin-bottom: 48px;">
+      <div class="grid-2" style="align-items: center;">
+        <div>
+          <span class="badge badge-rose" style="margin-bottom: 8px;">Morning Intelligence</span>
+          <h3 style="font-size: 1.35rem; margin-bottom: 8px;">Daily 06:00 AM Agent Briefing</h3>
+          <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+            Receive one consolidated summary of all 7 agents delivered straight to your inbox every morning. No spam, no fluff.
+          </p>
+        </div>
+        <form id="briefing-form" style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <input type="email" id="briefing-email" class="form-input" placeholder="Enter your email address" required style="flex: 1; min-width: 220px;">
+          <button type="submit" class="btn btn-primary">Subscribe</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- The Covenant Section -->
+    <section class="card" style="margin-bottom: 32px;">
+      <div style="text-align: center; max-width: 600px; margin: 0 auto 24px auto;">
+        <span class="badge badge-emerald">Access Condition</span>
+        <h3 style="font-size: 1.25rem; margin-top: 6px;">The Operator Covenant</h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">Access to these tools is predicated on respect for humans and automated systems alike.</p>
+      </div>
+      <div class="grid-4" id="covenant-grid">
+        <!-- Rendered dynamically by index.js -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Shared Responsive Footer -->
+  <footer class="site-footer"></footer>
+
+  <!-- Scripts: Shared Framework & Isolated Page Script -->
+  <script src="./app.js"></script>
+  <script src="./index.js"></script>
+</body>
 </html>
